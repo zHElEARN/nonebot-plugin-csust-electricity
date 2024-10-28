@@ -1,4 +1,4 @@
-# main.py
+# app.py
 
 import asyncio
 import websockets
