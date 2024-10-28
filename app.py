@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 # 常量定义
 PREFIX = "."  # 指令前缀
-WHITE_LISTED_GROUPS = [966613029, 713154536]  # 群号白名单
+WHITE_LISTED_GROUPS = [966613029]  # 群号白名单
 BINDINGS_FILE = "bindings.json"  # 持久化文件路径
 
 # 电费查询API的设置
@@ -129,8 +129,8 @@ async def listen_to_messages():
                 if group_id in WHITE_LISTED_GROUPS:
                     print(f"收到群组消息：{raw_message}")
 
-                    # 检查指令前缀
-                    if raw_message.startswith(PREFIX):
+                    # 检查指令前缀并确保指令长度大于前缀
+                    if raw_message.startswith(PREFIX) and len(raw_message) > len(PREFIX):
                         command = raw_message[len(PREFIX):].split()
 
                         if command[0] == "df":
