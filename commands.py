@@ -27,9 +27,9 @@ COMMANDS = {
 
 def list_commands():
     """返回可用指令及其说明"""
-    command_list = "可用指令：\n\n"
+    command_list = "可用指令："
     for command, info in COMMANDS.items():
-        command_list += f"{info['usage']} - {info['description']} - 例：{info['example']}\n\n"
+        command_list += f"\n\n{info['usage']} - {info['description']} - 例：{info['example']}"
     return command_list
 
 def handle_buildings_command(area):
