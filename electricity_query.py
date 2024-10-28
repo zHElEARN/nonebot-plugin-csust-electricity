@@ -1,10 +1,8 @@
-# electricity_query.py
-
 import requests
 import json
 from datetime import datetime
 from config import QUERY_URL, QUERY_HEADERS
-from utils import dict_to_urlencoded
+from utils import dict_to_urlencoded, get_aid
 
 query_params_template = {
     "jsondata": {
@@ -23,11 +21,10 @@ query_params_template = {
 
 def query_electricity(area, building_id, room_id):
     """查询电费信息，使用 buildingid 和宿舍号"""
-
-    # 根据校区选择 aid
-    aid = "0030000000002501" if area == "云塘" else "0030000000002502"
-
     try:
+        # 获取 aid
+        aid = get_aid(area)
+
         query_params = query_params_template.copy()
         query_params["jsondata"]["query_elec_roominfo"]["room"]["roomid"] = room_id
         query_params["jsondata"]["query_elec_roominfo"]["room"]["room"] = room_id
@@ -48,5 +45,7 @@ def query_electricity(area, building_id, room_id):
 
         return f"查询时间：{query_time}\n宿舍：{room}\n剩余电量：{electricity}"
 
+    except ValueError as e:
+        return str(e)
     except (requests.exceptions.RequestException, json.JSONDecodeError):
         return "查询失败，网络请求错误"
