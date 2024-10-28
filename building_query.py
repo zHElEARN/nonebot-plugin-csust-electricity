@@ -1,13 +1,17 @@
 import json
 import requests
+import logging
 from config import QUERY_URL, QUERY_HEADERS
 from utils import dict_to_urlencoded, get_aid
+
+logger = logging.getLogger(__name__)
+
 
 def query_buildings(area):
     """查询指定校区的所有宿舍楼栋信息，返回名称与 buildingid"""
     try:
-        # 获取 aid
         aid = get_aid(area)
+        logger.info(f"查询楼栋信息: 校区={area}, aid={aid}")
 
         building_query_params = {
             "jsondata": {
@@ -27,11 +31,18 @@ def query_buildings(area):
 
         result = response.json()
         building_info = result.get("query_elec_building", {}).get("buildingtab", [])
-
         buildings = {item["building"]: item["buildingid"] for item in building_info}
-        return dict(sorted(buildings.items(), key=lambda item: int(item[1]))) if buildings else "没有获取到楼栋信息。"
-    
+
+        if buildings:
+            logger.info("成功获取楼栋信息")
+            return dict(sorted(buildings.items(), key=lambda item: int(item[1])))
+        else:
+            logger.warning("未获取到楼栋信息")
+            return "没有获取到楼栋信息。"
+
     except ValueError as e:
+        logger.error(f"校区错误: {e}")
         return str(e)
     except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+        logger.error(f"查询失败: {e}")
         return f"查询失败: {e}"

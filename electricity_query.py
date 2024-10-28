@@ -1,8 +1,11 @@
 import requests
 import json
+import logging
 from datetime import datetime
 from config import QUERY_URL, QUERY_HEADERS
 from utils import dict_to_urlencoded, get_aid
+
+logger = logging.getLogger(__name__)
 
 query_params_template = {
     "jsondata": {
@@ -12,23 +15,28 @@ query_params_template = {
             "room": {"roomid": "", "room": ""},
             "floor": {"floorid": "", "floor": ""},
             "area": {"area": "", "areaname": ""},
-            "building": {"buildingid": "", "building": ""}
+            "building": {"buildingid": "", "building": ""},
         }
     },
     "funname": "synjones.onecard.query.elec.roominfo",
-    "json": "true"
+    "json": "true",
 }
+
 
 def query_electricity(area, building_id, room_id):
     """查询电费信息，使用 buildingid 和宿舍号"""
     try:
-        # 获取 aid
         aid = get_aid(area)
+        logger.info(
+            f"查询电费信息: 校区={area}, aid={aid}, building_id={building_id}, room_id={room_id}"
+        )
 
         query_params = query_params_template.copy()
         query_params["jsondata"]["query_elec_roominfo"]["room"]["roomid"] = room_id
         query_params["jsondata"]["query_elec_roominfo"]["room"]["room"] = room_id
-        query_params["jsondata"]["query_elec_roominfo"]["building"]["buildingid"] = building_id
+        query_params["jsondata"]["query_elec_roominfo"]["building"][
+            "buildingid"
+        ] = building_id
         query_params["jsondata"]["query_elec_roominfo"]["area"]["area"] = area + "校区"
         query_params["jsondata"]["query_elec_roominfo"]["aid"] = aid
 
@@ -43,9 +51,12 @@ def query_electricity(area, building_id, room_id):
         electricity = info.get("errmsg", "未知电量")
         query_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        logger.info(f"电费查询成功: {room} 剩余电量={electricity}")
         return f"查询时间：{query_time}\n宿舍：{room}\n剩余电量：{electricity}"
 
     except ValueError as e:
+        logger.error(f"校区错误: {e}")
         return str(e)
     except (requests.exceptions.RequestException, json.JSONDecodeError):
+        logger.error("查询失败，网络请求错误")
         return "查询失败，网络请求错误"
