@@ -14,18 +14,20 @@ query_params_template = {
             "room": {"roomid": "", "room": ""},
             "floor": {"floorid": "", "floor": ""},
             "area": {"area": "云塘校区", "areaname": "云塘校区"},
-            "building": {"buildingid": "557", "building": "至诚轩5栋A区"}
+            "building": {"buildingid": "", "building": ""}
         }
     },
     "funname": "synjones.onecard.query.elec.roominfo",
     "json": "true"
 }
 
-def query_electricity(room_id):
+def query_electricity(building_id, room_id):
+    """查询电费信息，使用 buildingid 和宿舍号"""
     try:
         query_params = query_params_template.copy()
         query_params["jsondata"]["query_elec_roominfo"]["room"]["roomid"] = room_id
         query_params["jsondata"]["query_elec_roominfo"]["room"]["room"] = room_id
+        query_params["jsondata"]["query_elec_roominfo"]["building"]["buildingid"] = building_id
 
         encoded_data = dict_to_urlencoded(query_params)
         response = requests.post(QUERY_URL, headers=QUERY_HEADERS, data=encoded_data)
