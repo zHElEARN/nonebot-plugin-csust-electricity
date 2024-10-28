@@ -1,6 +1,6 @@
 import requests
 import logging
-from config import GROUP_MSG_API, PREFIX, WHITE_LISTED_GROUPS
+from config import ENABLE_WHITE_LIST, GROUP_MSG_API, PREFIX, WHITE_LISTED_GROUPS
 from commands import (
     handle_invalid_command,
     handle_query_command,
@@ -28,7 +28,11 @@ async def handle_message(data):
         raw_message = data.get("raw_message", "").strip()
         logger.info(f"收到来自群 {group_id} 的消息: {raw_message}")
 
-        if group_id in WHITE_LISTED_GROUPS and raw_message.startswith(PREFIX):
+        if ENABLE_WHITE_LIST and group_id not in WHITE_LISTED_GROUPS:
+            logger.info(f"Group {group_id} is not in the white list, message ignored.")
+            return
+
+        if raw_message.startswith(PREFIX):
             command_parts = raw_message[len(PREFIX) :].split()
             if not command_parts:
                 return

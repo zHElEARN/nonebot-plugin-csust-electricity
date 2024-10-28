@@ -3,8 +3,10 @@
 # 指令前缀
 PREFIX = "."
 
+# 是否启用群白名单
+ENABLE_WHITE_LIST = False
 # 群号白名单
-WHITE_LISTED_GROUPS = [966613029, 713154536]
+WHITE_LISTED_GROUPS = []
 
 # 电费查询URL与设置
 QUERY_URL = "http://yktwd.csust.edu.cn:8988/web/Common/Tsm.html"
