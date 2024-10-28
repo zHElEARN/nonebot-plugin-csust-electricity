@@ -10,7 +10,7 @@ query_params_template = {
     "jsondata": {
         "query_elec_roominfo": {
             "aid": "",
-            "account": "317064",
+            "account": "000001",
             "room": {"roomid": "", "room": ""},
             "floor": {"floorid": "", "floor": ""},
             "area": {"area": "", "areaname": ""},

@@ -11,12 +11,12 @@ def query_buildings(area):
 
     # 根据校区选择 aid
     aid = "0030000000002501" if area == "云塘" else "0030000000002502"
-    
+
     building_query_params = {
         "jsondata": {
             "query_elec_building": {
                 "aid": aid,
-                "account": "317064",
+                "account": "000001",
                 "area": {"area": area + "校区", "areaname": area + "校区"},
             }
         },
