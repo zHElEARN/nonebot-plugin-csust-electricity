@@ -2,7 +2,7 @@
 
 import requests
 from config import GROUP_MSG_API, PREFIX, WHITE_LISTED_GROUPS
-from commands import handle_df_command, handle_bd_command, handle_buildings_command
+from commands import handle_query_command, handle_bind_command, handle_buildings_command
 
 def send_group_message(group_id, message):
     data = {
@@ -25,13 +25,13 @@ async def handle_message(data):
             if not command_parts:
                 return
 
-            if command_parts[0] == "df":
-                response = handle_df_command(group_id)
+            if command_parts[0] == "query":
+                response = handle_query_command(group_id)
                 send_group_message(group_id, response)
 
-            elif command_parts[0] == "bd" and len(command_parts) > 2:
+            elif command_parts[0] == "bind" and len(command_parts) > 2:
                 building_id, room_id = command_parts[1], command_parts[2]
-                response = handle_bd_command(group_id, building_id, room_id)
+                response = handle_bind_command(group_id, building_id, room_id)
                 send_group_message(group_id, response)
 
             elif command_parts[0] == "buildings":
