@@ -1,3 +1,4 @@
+import re
 import requests
 import json
 import logging
@@ -48,11 +49,18 @@ def query_electricity(area, building_id, room_id):
         info = result.get("query_elec_roominfo", {})
 
         room = info.get("room", {}).get("room", "未知宿舍")
-        electricity = info.get("errmsg", "未知电量")
+        electricity_msg = info.get("errmsg", "未知电量")
+
+        match = re.search(r"(\d+(\.\d+)?)", electricity_msg)
+        if match:
+            electricity_amount = match.group() + "度"
+        else:
+            electricity_amount = "未知"
+
         query_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        logger.info(f"电费查询成功: {room} 剩余电量={electricity}")
-        return f"查询时间：{query_time}\n宿舍：{room}\n剩余电量：{electricity}"
+        logger.info(f"电费查询成功: {room} 剩余电量={electricity_amount}")
+        return f"查询时间：{query_time}\n宿舍：{room}\n剩余电量：{electricity_amount}"
 
     except ValueError as e:
         logger.error(f"校区错误: {e}")
