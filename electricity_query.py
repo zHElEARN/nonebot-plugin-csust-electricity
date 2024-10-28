@@ -9,11 +9,11 @@ from utils import dict_to_urlencoded
 query_params_template = {
     "jsondata": {
         "query_elec_roominfo": {
-            "aid": "0030000000002501",
+            "aid": "",
             "account": "317064",
             "room": {"roomid": "", "room": ""},
             "floor": {"floorid": "", "floor": ""},
-            "area": {"area": "云塘校区", "areaname": "云塘校区"},
+            "area": {"area": "", "areaname": ""},
             "building": {"buildingid": "", "building": ""}
         }
     },
@@ -21,13 +21,19 @@ query_params_template = {
     "json": "true"
 }
 
-def query_electricity(building_id, room_id):
+def query_electricity(area, building_id, room_id):
     """查询电费信息，使用 buildingid 和宿舍号"""
+
+    # 根据校区选择 aid
+    aid = "0030000000002501" if area == "云塘" else "0030000000002502"
+
     try:
         query_params = query_params_template.copy()
         query_params["jsondata"]["query_elec_roominfo"]["room"]["roomid"] = room_id
         query_params["jsondata"]["query_elec_roominfo"]["room"]["room"] = room_id
         query_params["jsondata"]["query_elec_roominfo"]["building"]["buildingid"] = building_id
+        query_params["jsondata"]["query_elec_roominfo"]["area"]["area"] = area + "校区"
+        query_params["jsondata"]["query_elec_roominfo"]["aid"] = aid
 
         encoded_data = dict_to_urlencoded(query_params)
         response = requests.post(QUERY_URL, headers=QUERY_HEADERS, data=encoded_data)

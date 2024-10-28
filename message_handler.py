@@ -29,11 +29,12 @@ async def handle_message(data):
                 response = handle_query_command(group_id)
                 send_group_message(group_id, response)
 
-            elif command_parts[0] == "bind" and len(command_parts) > 2:
-                building_id, room_id = command_parts[1], command_parts[2]
-                response = handle_bind_command(group_id, building_id, room_id)
+            elif command_parts[0] == "bind" and len(command_parts) > 3:
+                area, building_id, room_id = command_parts[1], command_parts[2], command_parts[3]
+                response = handle_bind_command(group_id, area, building_id, room_id)
                 send_group_message(group_id, response)
 
-            elif command_parts[0] == "buildings":
-                response = handle_buildings_command(group_id)
+            elif command_parts[0] == "buildings" and len(command_parts) > 1:
+                area = command_parts[1]
+                response = handle_buildings_command(area)
                 send_group_message(group_id, response)
