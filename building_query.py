@@ -34,6 +34,7 @@ def query_buildings(area):
 
         buildings = {item["building"]: item["buildingid"] for item in building_info}
         if buildings:
+            buildings = dict(sorted(buildings.items(), key=lambda item: int(item[1])))
             return buildings
         else:
             return "没有获取到楼栋信息。"
