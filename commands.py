@@ -10,7 +10,7 @@ def handle_buildings_command(area):
     """列出所有宿舍楼信息，包括楼栋名称和 buildingid"""
     buildings = query_buildings(area)
     if isinstance(buildings, dict):
-        return "可用楼栋列表（楼栋名称 - 楼栋ID:\n" + "\n".join([f"{name} - {building_id}" for name, building_id in buildings.items()])
+        return "可用楼栋列表（楼栋名称 - 楼栋ID）:\n" + "\n".join([f"{name} - {building_id}" for name, building_id in buildings.items()])
     else:
         return buildings  # 返回错误信息
 
