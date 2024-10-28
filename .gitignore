@@ -162,4 +162,5 @@ cython_debug/
 #.idea/
 
 bindings.json
+rate_limit.json
 app.log

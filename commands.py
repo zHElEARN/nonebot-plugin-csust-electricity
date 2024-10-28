@@ -3,6 +3,7 @@
 from bindings import load_bindings, save_bindings
 from electricity_query import query_electricity
 from building_query import query_buildings
+from rate_limit import check_rate_limit
 
 bindings = load_bindings()
 
@@ -41,7 +42,10 @@ def handle_buildings_command(area):
         return buildings  # 返回错误信息
 
 def handle_query_command(group_id):
-    """查询绑定宿舍的电费信息"""
+    """查询绑定宿舍的电费信息，添加限速检查"""
+    if not check_rate_limit(group_id):
+        return "该群查询频率过高，请稍后再试。每小时最多查询两次。"
+    
     room_data = bindings.get(str(group_id))
     if room_data:
         area, building_id, room = room_data["area"], room_data["buildingid"], room_data["room"]

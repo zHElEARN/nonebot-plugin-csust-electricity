@@ -20,3 +20,8 @@ WS_URL = "ws://192.168.5.5:3001"
 
 # 持久化绑定信息文件路径
 BINDINGS_FILE = "bindings.json"
+
+# 限速设置
+RATE_LIMIT_FILE = "rate_limit.json"  # 持久化限速数据文件
+RATE_LIMIT_THRESHOLD = 2             # 每小时查询次数上限
+RATE_LIMIT_INTERVAL = 3600           # 限速时间间隔（秒），即1小时
