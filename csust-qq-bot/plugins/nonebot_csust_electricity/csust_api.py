@@ -46,7 +46,7 @@ def get_buildings_for_campus(campus_name, aid):
         buildings = {item["building"]: item["buildingid"] for item in building_info}
 
         print(f"成功获取到{campus_name}校区的楼栋信息，共 {len(buildings)} 个楼栋。")
-        return buildings
+        return dict(sorted(buildings.items(), key=lambda item: int(item[1])))
     except requests.exceptions.RequestException as e:
         print(f"{campus_name}校区的楼栋查询失败: {e}")
         return {}

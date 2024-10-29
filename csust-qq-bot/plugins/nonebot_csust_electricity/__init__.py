@@ -4,6 +4,7 @@ import nonebot
 from nonebot import get_plugin_config, on_command, require
 from nonebot.adapters import Message
 from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.rule import to_me
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
 
@@ -30,7 +31,7 @@ sub_plugins = nonebot.load_plugins(
 building_data = fetch_building_data()
 
 # 创建“电量”命令
-electricity = on_command("电量", aliases={"电量查询", "查电量"})
+electricity = on_command("电量", aliases={"电量查询", "查电量"}, rule=to_me())
 
 @electricity.handle()
 async def handle_electricity(args: Message = CommandArg()):
