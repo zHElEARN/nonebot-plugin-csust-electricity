@@ -1,11 +1,14 @@
-import json
 from pathlib import Path
 
 import nonebot
-from nonebot import get_plugin_config, on_command
+from nonebot import get_plugin_config, on_command, require
 from nonebot.adapters import Message
+from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
+
+require("nonebot_plugin_txt2img")
+from nonebot_plugin_txt2img import Txt2Img
 
 from .config import Config
 from .csust_api import fetch_electricity_data, fetch_building_data
@@ -37,7 +40,9 @@ async def handle_electricity(args: Message = CommandArg()):
     if args_text in building_data:
         campus = args_text
         buildings = "\n".join(building_data[campus].keys())
-        await electricity.finish(f"{campus}校区的宿舍楼有：\n{buildings}")
+        
+        pic = Txt2Img().draw(f"{campus}的宿舍楼列表", buildings)
+        await electricity.finish(MessageSegment.image(pic))
     
     # 如果输入格式为“校区 宿舍楼 宿舍号”
     parts = args_text.split()
