@@ -9,6 +9,6 @@ requires-python = ">=3.9, <4.0"
 adapters = [
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" }
 ]
-plugins = ["nonebot_plugin_friends", "nonebot_plugin_txt2img"]
+plugins = ["nonebot_plugin_friends", "nonebot_plugin_txt2img", "nonebot_plugin_apscheduler"]
 plugin_dirs = ["csust-qq-bot/plugins"]
 builtin_plugins = []
