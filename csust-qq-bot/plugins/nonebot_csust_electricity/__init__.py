@@ -6,7 +6,7 @@ from datetime import datetime
 import nonebot
 from nonebot import get_plugin_config, on_command, require
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11 import MessageSegment, Event
+from nonebot.adapters.onebot.v11 import MessageSegment, Event, GroupMessageEvent, PrivateMessageEvent
 from nonebot.rule import to_me
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
@@ -88,7 +88,11 @@ cancel_schedule = on_command("取消定时查询", rule=to_me())
 
 @schedule_query.handle()
 async def handle_schedule_query(event: Event, args: Message = CommandArg()):
-    user_id = event.get_user_id()
+    if isinstance(event, PrivateMessageEvent):
+        user_id = f"private-{event.get_user_id()}"
+    elif isinstance(event, GroupMessageEvent):
+        user_id = f"group-{event.group_id}"
+
     time_str = args.extract_plain_text().strip()
     
     # 校验时间格式
@@ -103,7 +107,7 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
 
     # 设置或更新定时任务
     if user_id in scheduled_tasks:
-        scheduler.remove_job(job_id=str(user_id))
+        scheduler.remove_job(job_id=user_id)
     
     # 创建定时任务
     scheduler.add_job(
@@ -111,7 +115,7 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
         trigger="cron",
         hour=query_time.hour,
         minute=query_time.minute,
-        id=str(user_id),
+        id=user_id,
         args=[user_id],
         replace_existing=True,
     )
@@ -123,10 +127,13 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
 
 @cancel_schedule.handle()
 async def handle_cancel_schedule(event: Event):
-    user_id = event.get_user_id()
+    if isinstance(event, PrivateMessageEvent):
+        user_id = f"private-{event.get_user_id()}"
+    elif isinstance(event, GroupMessageEvent):
+        user_id = f"group-{event.group_id}"
     
     if user_id in scheduled_tasks:
-        scheduler.remove_job(job_id=str(user_id))
+        scheduler.remove_job(job_id=user_id)
         del scheduled_tasks[user_id]
         save_scheduled_tasks()
         await cancel_schedule.finish("已成功取消您的定时查询任务")
@@ -143,7 +150,10 @@ async def execute_scheduled_query(user_id: str):
     if electricity_data and "剩余电量" in electricity_data:
         remaining_power = electricity_data["剩余电量"]
         msg = f"定时查询提醒：\n{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
-        await nonebot.get_bot().send_private_msg(user_id=int(user_id), message=msg)
+        if user_id.startswith("private-"):
+            await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=msg)
+        elif user_id.startswith("group-"):
+            await nonebot.get_bot().send_group_msg(group_id=int(user_id.split('-')[1]), message=msg)
 
 # 加载定时任务到scheduler
 def load_tasks_to_scheduler():
@@ -154,7 +164,7 @@ def load_tasks_to_scheduler():
             trigger="cron",
             hour=query_time.hour,
             minute=query_time.minute,
-            id=str(user_id),
+            id=user_id,
             args=[user_id],
             replace_existing=True,
         )
@@ -164,7 +174,10 @@ load_tasks_to_scheduler()
 
 @electricity.handle()
 async def handle_electricity(event: Event, args: Message = CommandArg()):
-    user_id = event.get_user_id()
+    if isinstance(event, PrivateMessageEvent):
+        user_id = f"private-{event.get_user_id()}"
+    elif isinstance(event, GroupMessageEvent):
+        user_id = f"group-{event.group_id}"
     args_text = args.extract_plain_text().strip()
     
     # 检查查询次数限制
@@ -241,7 +254,11 @@ def update_query_limit(user_id):
 
 @bind_room.handle()
 async def handle_bind_room(event: Event, args: Message = CommandArg()):
-    user_id = event.get_user_id()
+    if isinstance(event, PrivateMessageEvent):
+        user_id = f"private-{event.get_user_id()}"
+    elif isinstance(event, GroupMessageEvent):
+        user_id = f"group-{event.group_id}"
+
     args_text = args.extract_plain_text().strip()
     parts = args_text.split()
     
@@ -254,11 +271,15 @@ async def handle_bind_room(event: Event, args: Message = CommandArg()):
 
     binding_data[user_id] = [campus, building_name, room_id]
     save_binding_data()
-    await bind_room.finish(f"绑定成功！已将您的QQ号与{campus}校区 {building_name} {room_id} 绑定")
+    await bind_room.finish(f"绑定成功！已将{'您的QQ号' if 'private-' in user_id else '本群号'}与{campus}校区 {building_name} {room_id} 绑定")
 
 @unbind_room.handle()
 async def handle_unbind_room(event: Event):
-    user_id = event.get_user_id()
+    if isinstance(event, PrivateMessageEvent):
+        user_id = f"private-{event.get_user_id()}"
+    elif isinstance(event, GroupMessageEvent):
+        user_id = f"group-{event.group_id}"
+        
     if user_id in binding_data:
         del binding_data[user_id]
         save_binding_data()
