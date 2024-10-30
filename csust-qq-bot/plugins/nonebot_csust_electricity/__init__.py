@@ -85,6 +85,37 @@ bind_room = on_command("绑定宿舍", aliases={"绑定"}, rule=to_me())
 unbind_room = on_command("解绑宿舍", aliases={"解绑"}, rule=to_me())
 schedule_query = on_command("定时查询", aliases={"设置定时查询"}, rule=to_me())
 cancel_schedule = on_command("取消定时查询", rule=to_me())
+help_command = on_command("帮助", aliases={"help"}, rule=to_me())
+
+@help_command.handle()
+async def handle_help():
+    help_text = """
+    机器人使用帮助：
+    1. 查询电量：
+       发送“/电量 校区 宿舍楼 宿舍号”来查询电量
+       例如：/电量 云塘 至诚轩5栋A区 A233
+       
+    2. 绑定宿舍：
+       发送“/绑定宿舍 校区 宿舍楼 宿舍号”来绑定宿舍
+       例如：/绑定宿舍 云塘 16栋A区 A101
+       （绑定之后可以直接发送“电量”进行查询）
+       
+    3. 解绑宿舍：
+       在群聊中和私聊中均可发送“/解绑”来解绑宿舍
+       
+    4. 定时查询：
+       发送“/定时查询 HH:MM”来设置定时查询
+       例如：/定时查询 08:00
+       
+    5. 取消定时查询：
+       在群聊中和私聊中均可发送“/取消定时查询”来取消定时提醒
+    """
+
+    # 创建图片
+    pic = Txt2Img().draw("机器人帮助", help_text)
+
+    # 发送图片消息
+    await help_command.send(MessageSegment.image(pic))
 
 @schedule_query.handle()
 async def handle_schedule_query(event: Event, args: Message = CommandArg()):
@@ -182,11 +213,9 @@ async def handle_electricity(event: Event, args: Message = CommandArg()):
     args_text = args.extract_plain_text().strip()
     
     # 检查查询次数限制
-    individual_query = False
     if isinstance(event, GroupMessageEvent) and args_text:
         # 处理用户提供参数查询电量
         query_limit_identifier = f"user-{event.get_user_id()}"
-        individual_query = True
     else:
         # 处理普通绑定查询电量
         query_limit_identifier = user_id
