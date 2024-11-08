@@ -1,10 +1,12 @@
 import json
 import time
+import numpy
 from pathlib import Path
 from datetime import datetime
+from sklearn.linear_model import LinearRegression
 
 import nonebot
-from nonebot import get_plugin_config, on_command, require
+from nonebot import get_plugin_config, on_command, require, logger
 from nonebot.adapters import Message
 from nonebot.adapters.onebot.v11 import MessageSegment, Event, GroupMessageEvent, PrivateMessageEvent
 from nonebot.rule import to_me
@@ -99,6 +101,29 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
             electricity_data[room_key] = []
         electricity_data[room_key].append(new_entry)
         save_electricity_data()
+
+    if len(electricity_data[room_key]) >= 2:
+        estimated_time = estimate_discharging_time(electricity_data[room_key])
+        if estimated_time:
+            return estimated_time
+            
+    return None
+
+def estimate_discharging_time(electricity_records):
+    if len(electricity_records) < 2:
+        return None
+    
+    timestamps = [datetime.fromisoformat(record["timestamp"]).timestamp() for record in electricity_records]
+    electricity = [float(record["electricity"].split()[0]) for record in electricity_records]
+
+    x = numpy.array(timestamps).reshape(-1, 1)
+    y = numpy.array(electricity).reshape(-1, 1)
+
+    model = LinearRegression().fit(x, y)
+    predicted_time_seconds = (model.intercept_ / -model.coef_)[0][0]
+
+    predicted_datetime = datetime.fromtimestamp(predicted_time_seconds)
+    return predicted_datetime
 
 load_binding_data()
 load_scheduled_tasks()
@@ -208,11 +233,19 @@ async def execute_scheduled_query(user_id: str):
     if electricity_data and "剩余电量" in electricity_data:
         remaining_power = electricity_data["剩余电量"]
         msg = f"定时查询提醒：\n{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
-        store_electricity_data(campus, building_name, room_id, remaining_power)
+
+        estimated_time = store_electricity_data(campus, building_name, room_id, remaining_power)
+
         if user_id.startswith("user-"):
             await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=msg)
+            if estimated_time:
+                estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
+                await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=f"预计电量耗尽时间：{estimated_time_str}")
         elif user_id.startswith("group-"):
             await nonebot.get_bot().send_group_msg(group_id=int(user_id.split('-')[1]), message=msg)
+            if estimated_time:
+                estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
+                await nonebot.get_bot().send_group_msg(group_id=int(user_id.split('-')[1]), message=f"预计电量耗尽时间：{estimated_time_str}")
 
 # 加载定时任务到scheduler
 def load_tasks_to_scheduler():
@@ -286,11 +319,13 @@ async def query_electricity(campus, building_name, room_id, handler, query_limit
         update_query_limit(query_limit_identifier)  # 更新查询记录
 
         # 保存电量数据
-        store_electricity_data(campus, building_name, room_id, remaining_power)
+        estimated_time = store_electricity_data(campus, building_name, room_id, remaining_power)
 
-        await handler.finish(
-            f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
-        )
+        msg = f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
+        if estimated_time:
+            estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
+            msg += f"\n预计电量耗尽时间：{estimated_time_str}"
+        await handler.finish(msg)
     else:
         await handler.finish("未能获取电量信息，请检查宿舍号是否正确")
 
