@@ -38,6 +38,7 @@ building_data = fetch_building_data()
 binding_data = {}
 query_limit_data = {}  # 查询次数和时间的全局变量
 scheduled_tasks = {}   # 保存用户的定时查询任务
+electricity_data = {}
 
 def load_binding_data():
     global binding_data
@@ -75,12 +76,37 @@ def save_query_limit_data():
     with open("query_limit_data.json", "w", encoding="utf-8") as f:
         json.dump(query_limit_data, f, ensure_ascii=False, indent=4)
 
+def load_electricity_data():
+    global electricity_data
+    try:
+        with open("electricity_data.json", "r", encoding="utf-8") as f:
+            electricity_data = json.load(f)
+    except FileNotFoundError:
+        electricity_data = {}
+
+def save_electricity_data():
+    with open("electricity_data.json", "w", encoding="utf-8") as f:
+        json.dump(electricity_data, f, ensure_ascii=False, indent=4)
+
+def store_electricity_data(campus, building_name, room_id, remaining_power):
+    load_electricity_data()
+    room_key = f"{campus}-{building_name}-{room_id}"
+    timestamp = datetime.now().isoformat()
+    new_entry = {"timestamp": timestamp, "electricity": remaining_power}
+
+    if room_key not in electricity_data or electricity_data[room_key][-1]["electricity"] != remaining_power:
+        if room_key not in electricity_data:
+            electricity_data[room_key] = []
+        electricity_data[room_key].append(new_entry)
+        save_electricity_data()
+
 load_binding_data()
 load_scheduled_tasks()
 load_query_limit_data()
+load_electricity_data()
 
 # 创建命令
-electricity = on_command("电量", aliases={"电量查询", "查电量"}, rule=to_me())
+electricity = on_command("电量", aliases={"电量查询", "查电量", "查询电量"}, rule=to_me())
 bind_room = on_command("绑定宿舍", aliases={"绑定"}, rule=to_me())
 unbind_room = on_command("解绑宿舍", aliases={"解绑"}, rule=to_me())
 schedule_query = on_command("定时查询", aliases={"设置定时查询"}, rule=to_me())
@@ -182,6 +208,7 @@ async def execute_scheduled_query(user_id: str):
     if electricity_data and "剩余电量" in electricity_data:
         remaining_power = electricity_data["剩余电量"]
         msg = f"定时查询提醒：\n{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
+        store_electricity_data(campus, building_name, room_id, remaining_power)
         if user_id.startswith("user-"):
             await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=msg)
         elif user_id.startswith("group-"):
@@ -252,11 +279,15 @@ async def query_electricity(campus, building_name, room_id, handler, query_limit
         await handler.finish("校区或宿舍楼名称错误，请检查输入")
 
     building_id = building_data[campus][building_name]
-    electricity_data = fetch_electricity_data(campus, building_id, room_id)
+    new_electricity_data = fetch_electricity_data(campus, building_id, room_id)
     
-    if electricity_data and "剩余电量" in electricity_data:
-        remaining_power = electricity_data["剩余电量"]
+    if new_electricity_data and "剩余电量" in new_electricity_data:
+        remaining_power = new_electricity_data["剩余电量"]
         update_query_limit(query_limit_identifier)  # 更新查询记录
+
+        # 保存电量数据
+        store_electricity_data(campus, building_name, room_id, remaining_power)
+
         await handler.finish(
             f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
         )

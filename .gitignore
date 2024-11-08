@@ -163,3 +163,4 @@ cython_debug/
 binding_data.json
 query_limit_data.json
 scheduled_tasks.json
+electricity_data.json
