@@ -35,11 +35,10 @@ sub_plugins = nonebot.load_plugins(
     str(Path(__file__).parent.joinpath("plugins").resolve())
 )
 
-# 加载宿舍楼信息的全局变量
 building_data = fetch_building_data()
 binding_data = {}
-query_limit_data = {}  # 查询次数和时间的全局变量
-scheduled_tasks = {}   # 保存用户的定时查询任务
+query_limit_data = {}
+scheduled_tasks = {}
 electricity_data = {}
 
 def load_binding_data():
@@ -235,17 +234,17 @@ async def execute_scheduled_query(user_id: str):
         msg = f"定时查询提醒：\n{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
 
         estimated_time = store_electricity_data(campus, building_name, room_id, remaining_power)
+        
+        if estimated_time:
+            estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
+            msg += f"\n预计电量耗尽时间：{estimated_time_str}"
 
+        # 根据用户ID前缀选择私聊或群聊发送
         if user_id.startswith("user-"):
             await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=msg)
-            if estimated_time:
-                estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
-                await nonebot.get_bot().send_private_msg(user_id=int(user_id.split('-')[1]), message=f"预计电量耗尽时间：{estimated_time_str}")
         elif user_id.startswith("group-"):
             await nonebot.get_bot().send_group_msg(group_id=int(user_id.split('-')[1]), message=msg)
-            if estimated_time:
-                estimated_time_str = estimated_time.strftime('%Y-%m-%d %H:%M:%S')
-                await nonebot.get_bot().send_group_msg(group_id=int(user_id.split('-')[1]), message=f"预计电量耗尽时间：{estimated_time_str}")
+
 
 # 加载定时任务到scheduler
 def load_tasks_to_scheduler():
