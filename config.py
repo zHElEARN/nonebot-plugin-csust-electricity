@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
 
+class ScopedConfig(BaseModel):
+    data_storage_path: str = "csust-electricity"
+
+
 class Config(BaseModel):
-    """Plugin Config Here"""
+    csust_electricity: ScopedConfig = ScopedConfig()

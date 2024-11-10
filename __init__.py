@@ -35,7 +35,7 @@ __plugin_meta__ = PluginMetadata(
     config=Config,
 )
 
-config = get_plugin_config(Config)
+config = get_plugin_config(Config).csust_electricity
 
 sub_plugins = nonebot.load_plugins(
     str(Path(__file__).parent.joinpath("plugins").resolve())
@@ -43,8 +43,8 @@ sub_plugins = nonebot.load_plugins(
 
 
 def ensure_data_folder_exists():
-    if not os.path.exists("data"):
-        os.makedirs("data")
+    if not os.path.exists(config.data_storage_path):
+        os.makedirs(config.data_storage_path)
 
 
 building_data = fetch_building_data()
@@ -57,56 +57,56 @@ electricity_data = {}
 def load_binding_data():
     global binding_data
     try:
-        with open("data/binding_data.json", "r", encoding="utf-8") as f:
+        with open(os.path.join(config.data_storage_path, "binding_data.json"), "r", encoding="utf-8") as f:
             binding_data = json.load(f)
     except FileNotFoundError:
         binding_data = {}
 
 
 def save_binding_data():
-    with open("data/binding_data.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(config.data_storage_path, "binding_data.json"), "w", encoding="utf-8") as f:
         json.dump(binding_data, f, ensure_ascii=False, indent=4)
 
 
 def load_scheduled_tasks():
     global scheduled_tasks
     try:
-        with open("data/scheduled_tasks.json", "r", encoding="utf-8") as f:
+        with open(os.path.join(config.data_storage_path, "scheduled_tasks.json"), "r", encoding="utf-8") as f:
             scheduled_tasks = json.load(f)
     except FileNotFoundError:
         scheduled_tasks = {}
 
 
 def save_scheduled_tasks():
-    with open("data/scheduled_tasks.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(config.data_storage_path, "scheduled_tasks.json"), "w", encoding="utf-8") as f:
         json.dump(scheduled_tasks, f, ensure_ascii=False, indent=4)
 
 
 def load_query_limit_data():
     global query_limit_data
     try:
-        with open("data/query_limit_data.json", "r", encoding="utf-8") as f:
+        with open(os.path.join(config.data_storage_path, "query_limit_data.json"), "r", encoding="utf-8") as f:
             query_limit_data = json.load(f)
     except FileNotFoundError:
         query_limit_data = {}
 
 
 def save_query_limit_data():
-    with open("data/query_limit_data.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(config.data_storage_path, "query_limit_data.json"), "w", encoding="utf-8") as f:
         json.dump(query_limit_data, f, ensure_ascii=False, indent=4)
 
 
 def load_electricity_data():
     global electricity_data
     try:
-        with open("data/electricity_data.json", "r", encoding="utf-8") as f:
+        with open(os.path.join(config.data_storage_path, "electricity_data.json"), "r", encoding="utf-8") as f:
             electricity_data = json.load(f)
     except FileNotFoundError:
         electricity_data = {}
 
 
 def save_electricity_data():
-    with open("data/electricity_data.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(config.data_storage_path, "electricity_data.json"), "w", encoding="utf-8") as f:
         json.dump(electricity_data, f, ensure_ascii=False, indent=4)
 
 
