@@ -1,3 +1,4 @@
+import os
 import json
 import time
 import numpy
@@ -35,6 +36,10 @@ sub_plugins = nonebot.load_plugins(
     str(Path(__file__).parent.joinpath("plugins").resolve())
 )
 
+def ensure_data_folder_exists():
+    if not os.path.exists("data"):
+        os.makedirs("data")
+
 building_data = fetch_building_data()
 binding_data = {}
 query_limit_data = {}
@@ -44,49 +49,49 @@ electricity_data = {}
 def load_binding_data():
     global binding_data
     try:
-        with open("binding_data.json", "r", encoding="utf-8") as f:
+        with open("data/binding_data.json", "r", encoding="utf-8") as f:
             binding_data = json.load(f)
     except FileNotFoundError:
         binding_data = {}
 
 def save_binding_data():
-    with open("binding_data.json", "w", encoding="utf-8") as f:
+    with open("data/binding_data.json", "w", encoding="utf-8") as f:
         json.dump(binding_data, f, ensure_ascii=False, indent=4)
         
 def load_scheduled_tasks():
     global scheduled_tasks
     try:
-        with open("scheduled_tasks.json", "r", encoding="utf-8") as f:
+        with open("data/scheduled_tasks.json", "r", encoding="utf-8") as f:
             scheduled_tasks = json.load(f)
     except FileNotFoundError:
         scheduled_tasks = {}
 
 def save_scheduled_tasks():
-    with open("scheduled_tasks.json", "w", encoding="utf-8") as f:
+    with open("data/scheduled_tasks.json", "w", encoding="utf-8") as f:
         json.dump(scheduled_tasks, f, ensure_ascii=False, indent=4)
 
 def load_query_limit_data():
     global query_limit_data
     try:
-        with open("query_limit_data.json", "r", encoding="utf-8") as f:
+        with open("data/query_limit_data.json", "r", encoding="utf-8") as f:
             query_limit_data = json.load(f)
     except FileNotFoundError:
         query_limit_data = {}
 
 def save_query_limit_data():
-    with open("query_limit_data.json", "w", encoding="utf-8") as f:
+    with open("data/query_limit_data.json", "w", encoding="utf-8") as f:
         json.dump(query_limit_data, f, ensure_ascii=False, indent=4)
 
 def load_electricity_data():
     global electricity_data
     try:
-        with open("electricity_data.json", "r", encoding="utf-8") as f:
+        with open("data/electricity_data.json", "r", encoding="utf-8") as f:
             electricity_data = json.load(f)
     except FileNotFoundError:
         electricity_data = {}
 
 def save_electricity_data():
-    with open("electricity_data.json", "w", encoding="utf-8") as f:
+    with open("data/electricity_data.json", "w", encoding="utf-8") as f:
         json.dump(electricity_data, f, ensure_ascii=False, indent=4)
 
 def store_electricity_data(campus, building_name, room_id, remaining_power):
@@ -123,6 +128,8 @@ def estimate_discharging_time(electricity_records):
 
     predicted_datetime = datetime.fromtimestamp(predicted_time_seconds)
     return predicted_datetime
+
+ensure_data_folder_exists()
 
 load_binding_data()
 load_scheduled_tasks()
