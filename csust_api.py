@@ -45,7 +45,9 @@ def get_buildings_for_campus(campus_name, aid):
         building_info = result.get("query_elec_building", {}).get("buildingtab", [])
         buildings = {item["building"]: item["buildingid"] for item in building_info}
 
-        logger.info(f"成功获取到{campus_name}校区的楼栋信息，共 {len(buildings)} 个楼栋。")
+        logger.info(
+            f"成功获取到{campus_name}校区的楼栋信息，共 {len(buildings)} 个楼栋。"
+        )
         return dict(sorted(buildings.items(), key=lambda item: int(item[1])))
     except requests.exceptions.RequestException as e:
         logger.error(f"{campus_name}校区的楼栋查询失败: {e}")
