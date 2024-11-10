@@ -29,7 +29,7 @@ from .config import Config
 from .csust_api import fetch_electricity_data, fetch_building_data
 
 __plugin_meta__ = PluginMetadata(
-    name="nonebot-csust-electricity",
+    name="nonebot-plugin-csust-electricity",
     description="",
     usage="",
     config=Config,

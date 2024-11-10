@@ -1,6 +1,6 @@
-# nonebot-csust-electricity
+# nonebot-plugin-csust-electricity
 
-`nonebot-csust-electricity` 是一个适用于 [NoneBot2](https://github.com/nonebot/nonebot2) 的插件，专门用于查询 [长沙理工大学](https://www.csust.edu.cn/) 校区内宿舍的电量，并支持设置定时提醒。用户可以方便地查询宿舍电量、绑定和解绑宿舍信息，还可以设置定时查询提醒，确保及时了解电量状况。
+`nonebot-plugin-csust-electricity` 是一个适用于 [NoneBot2](https://github.com/nonebot/nonebot2) 的插件，专门用于查询 [长沙理工大学](https://www.csust.edu.cn/) 校区内宿舍的电量，并支持设置定时提醒。用户可以方便地查询宿舍电量、绑定和解绑宿舍信息，还可以设置定时查询提醒，确保及时了解电量状况。
 
 ## 功能
 
@@ -12,10 +12,10 @@
 
 1. **安装插件**：
 
-    将 `nonebot-csust-electricity` 添加到您的 NoneBot2 项目中：
+    将 `nonebot-plugin-csust-electricity` 添加到您的 NoneBot2 项目中：
 
     ```bash
-    git clone https://github.com/zHElEARN/nonebot-csust-electricity plugins/nonebot-csust-electricity
+    git clone https://github.com/zHElEARN/nonebot-plugin-csust-electricity plugins/nonebot-plugin-csust-electricity
     ```
 
 2. **环境配置**：
