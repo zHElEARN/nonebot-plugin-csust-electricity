@@ -377,7 +377,7 @@ async def query_electricity(
     building_id = building_data[campus][building_name]
     new_electricity_data = fetch_electricity_data(campus, building_id, room_id)
 
-    if new_electricity_data and "剩余电量" in new_electricity_data:
+    if new_electricity_data and "剩余电量" in new_electricity_data and new_electricity_data["剩余电量"] != "未知":
         remaining_power = new_electricity_data["剩余电量"]
         update_query_limit(query_limit_identifier)  # 更新查询记录
 
