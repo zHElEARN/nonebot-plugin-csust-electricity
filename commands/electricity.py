@@ -24,29 +24,23 @@ electricity = on_command(
 @electricity.handle()
 async def handle_electricity(event: Event, args: Message = CommandArg()):
     if isinstance(event, PrivateMessageEvent):
-        user_id = f"user-{event.get_user_id()}"
+        prefix = "user"
+        id = event.get_user_id()
     elif isinstance(event, GroupMessageEvent):
-        user_id = f"group-{event.group_id}"
+        prefix = "group"
+        id = str(event.group_id)
 
     args_text = args.extract_plain_text().strip()
 
-    # 检查查询次数限制
-    if isinstance(event, GroupMessageEvent) and args_text:
-        # 处理用户提供参数查询电量
-        query_limit_identifier = f"user-{event.get_user_id()}"
-    else:
-        # 处理普通绑定查询电量
-        query_limit_identifier = user_id
-
-    if not check_query_limit(query_limit_identifier):
+    if not check_query_limit(prefix, id):
         await electricity.finish("查询次数已达上限，每小时最多查询两次。请稍后再试")
 
     # 检查用户是否提供了查询参数
     if not args_text:
-        if user_id in data_manager.binding_data:
-            campus, building_name, room_id = data_manager.binding_data[user_id]
+        if id in data_manager.binding_data[prefix]:
+            campus, building_name, room_id = data_manager.binding_data[prefix][id]
             await query_electricity(
-                campus, building_name, room_id, electricity, query_limit_identifier
+                campus, building_name, room_id, electricity, prefix, id
             )
         else:
             await electricity.finish(
@@ -67,7 +61,7 @@ async def handle_electricity(event: Event, args: Message = CommandArg()):
         elif len(parts) == 3:
             campus, building_name, room_id = parts
             await query_electricity(
-                campus, building_name, room_id, electricity, query_limit_identifier
+                campus, building_name, room_id, electricity, prefix, id
             )
         else:
             await electricity.finish(

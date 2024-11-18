@@ -50,7 +50,6 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
     data_manager.load_electricity_data()
     room_key = f"{campus}-{building_name}-{room_id}"
     timestamp = datetime.now().isoformat()
-    # new_entry = {"timestamp": timestamp, "electricity": remaining_power}
     new_entry = [timestamp, remaining_power]
 
     if (
@@ -71,7 +70,7 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
 
 
 async def query_electricity(
-    campus, building_name, room_id, handler, query_limit_identifier
+    campus, building_name, room_id, handler, prefix, id
 ):
     if campus not in building_data or building_name not in building_data[campus]:
         await handler.finish("校区或宿舍楼名称错误，请检查输入")
@@ -80,7 +79,7 @@ async def query_electricity(
     remaining_power = fetch_electricity_data(campus, building_id, room_id)
 
     if remaining_power != "未知":
-        update_query_limit(query_limit_identifier)  # 更新查询记录
+        update_query_limit(prefix, id)  # 更新查询记录
 
         # 保存电量数据
         estimated_time = store_electricity_data(
@@ -96,32 +95,32 @@ async def query_electricity(
         await handler.finish("未能获取电量信息，请检查宿舍号是否正确")
 
 
-def check_query_limit(identifier):
+def check_query_limit(prefix, id):
     current_time = time.time()
-    if identifier in data_manager.query_limit_data:
-        last_time, count = data_manager.query_limit_data[identifier]
+    if id in data_manager.query_limit_data[prefix]:
+        last_time, count = data_manager.query_limit_data[prefix][id]
         # 若在一小时内查询次数达到两次
         if current_time - last_time < 3600 and count >= 2:
             return False
         # 若超过一小时，则重置查询次数
         elif current_time - last_time >= 3600:
-            data_manager.query_limit_data[identifier] = (current_time, 0)
+            data_manager.query_limit_data[prefix][id] = (current_time, 0)
             data_manager.save_query_limit_data()
             return True
     else:
-        data_manager.query_limit_data[identifier] = (current_time, 0)
+        data_manager.query_limit_data[prefix][id] = (current_time, 0)
         data_manager.save_query_limit_data()
     return True
 
 
-def update_query_limit(identifier):
+def update_query_limit(prefix, id):
     current_time = time.time()
-    if identifier in data_manager.query_limit_data:
-        last_time, count = data_manager.query_limit_data[identifier]
+    if id in data_manager.query_limit_data[prefix]:
+        last_time, count = data_manager.query_limit_data[prefix][id]
         if current_time - last_time < 3600:
-            data_manager.query_limit_data[identifier] = (last_time, count + 1)
+            data_manager.query_limit_data[prefix][id] = (last_time, count + 1)
         else:
-            data_manager.query_limit_data[identifier] = (current_time, 1)
+            data_manager.query_limit_data[prefix][id] = (current_time, 1)
     else:
-        data_manager.query_limit_data[identifier] = (current_time, 1)
+        data_manager.query_limit_data[prefix][id] = (current_time, 1)
     data_manager.save_query_limit_data()

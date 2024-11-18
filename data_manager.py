@@ -29,19 +29,22 @@ class DataManager:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def load_binding_data(self) -> None:
-        self.binding_data = self.load_json("binding_data.json")
+        temp = self.load_json("binding_data.json")
+        self.binding_data = {"group": {}, "user": {}} if temp == {} else temp
 
     def save_binding_data(self) -> None:
         self.save_json(self.binding_data, "binding_data.json")
 
     def load_scheduled_tasks(self) -> None:
-        self.scheduled_tasks = self.load_json("scheduled_tasks.json")
+        temp = self.load_json("scheduled_tasks.json")
+        self.scheduled_tasks = {"group": {}, "user": {}} if temp == {} else temp
 
     def save_scheduled_tasks(self) -> None:
         self.save_json(self.scheduled_tasks, "scheduled_tasks.json")
 
     def load_query_limit_data(self) -> None:
-        self.query_limit_data = self.load_json("query_limit_data.json")
+        temp = self.load_json("query_limit_data.json")
+        self.query_limit_data = {"group": {}, "user": {}} if temp == {} else temp
 
     def save_query_limit_data(self) -> None:
         self.save_json(self.query_limit_data, "query_limit_data.json")
