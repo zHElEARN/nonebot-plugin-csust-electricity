@@ -129,3 +129,5 @@ if __name__ == "__main__":
 
     electricity_data = fetch_electricity_data(campus, building_id, room_id)
     logger.info(electricity_data)
+
+building_data = fetch_building_data()

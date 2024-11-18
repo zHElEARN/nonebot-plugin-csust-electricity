@@ -1,5 +1,9 @@
 import json
+
 from pathlib import Path
+from nonebot import get_plugin_config
+
+from .config import Config
 
 
 class DataManager:
@@ -47,3 +51,8 @@ class DataManager:
 
     def save_electricity_data(self) -> None:
         self.save_json(self.electricity_data, "electricity_data.json")
+
+
+config = get_plugin_config(Config).csust_electricity
+
+data_manager = DataManager(config.data_storage_path)

@@ -19,7 +19,7 @@ from nonebot.rule import to_me
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
 
-from .data_manager import DataManager
+from .data_manager import data_manager
 
 require("nonebot_plugin_txt2img")
 from nonebot_plugin_txt2img import Txt2Img
@@ -28,7 +28,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 from .config import Config
-from .csust_api import fetch_electricity_data, fetch_building_data
+from .csust_api import fetch_electricity_data, building_data
 
 __plugin_meta__ = PluginMetadata(
     name="nonebot-plugin-csust-electricity",
@@ -42,16 +42,6 @@ config = get_plugin_config(Config).csust_electricity
 sub_plugins = nonebot.load_plugins(
     str(Path(__file__).parent.joinpath("plugins").resolve())
 )
-
-
-def ensure_data_folder_exists():
-    if not os.path.exists(config.data_storage_path):
-        os.makedirs(config.data_storage_path)
-
-
-building_data = fetch_building_data()
-
-data_manager = DataManager(config.data_storage_path)
 
 
 def store_electricity_data(campus, building_name, room_id, remaining_power):
@@ -101,8 +91,6 @@ def estimate_discharging_time(electricity_records):
     return predicted_datetime
 
 
-ensure_data_folder_exists()
-
 data_manager.load_binding_data()
 data_manager.load_scheduled_tasks()
 data_manager.load_query_limit_data()
@@ -122,27 +110,27 @@ help_command = on_command("帮助", aliases={"help"}, rule=to_me())
 @help_command.handle()
 async def handle_help():
     help_text = """
-    机器人使用帮助：
-    1. 查询电量：
-       发送“/电量 校区 宿舍楼 宿舍号”来查询电量
-       可以通过输入“/电量 校区”来查看对应校区的宿舍楼
-       例如：/电量 云塘 至诚轩5栋A区 A233
-       
-    2. 绑定宿舍：
-       发送“/绑定宿舍 校区 宿舍楼 宿舍号”来绑定宿舍
-       例如：/绑定宿舍 云塘 16栋A区 A101
-       （绑定之后可以直接发送“/电量”进行查询）
-       
-    3. 解绑宿舍：
-       在群聊中和私聊中均可发送“/解绑”来解绑宿舍
-       
-    4. 定时查询：
-       发送“/定时查询 HH:MM”来设置定时查询
-       例如：/定时查询 08:00
-       
-    5. 取消定时查询：
-       在群聊中和私聊中均可发送“/取消定时查询”来取消定时提醒
-    """
+机器人使用帮助：
+1.  查询电量：
+    发送“/电量 校区 宿舍楼 宿舍号”来查询电量
+    可以通过输入“/电量 校区”来查看对应校区的宿舍楼
+    例如：/电量 云塘 至诚轩5栋A区 A233
+    
+2.  绑定宿舍：
+    发送“/绑定宿舍 校区 宿舍楼 宿舍号”来绑定宿舍
+    例如：/绑定宿舍 云塘 16栋A区 A101
+    （绑定之后可以直接发送“/电量”进行查询）
+    
+3.  解绑宿舍：
+    在群聊中和私聊中均可发送“/解绑”来解绑宿舍
+    
+4.  定时查询：
+    发送“/定时查询 HH:MM”来设置定时查询
+    例如：/定时查询 08:00
+    
+5.  取消定时查询：
+    在群聊中和私聊中均可发送“/取消定时查询”来取消定时提醒
+""" 
 
     # 创建图片
     pic = Txt2Img().draw("机器人帮助", help_text)
