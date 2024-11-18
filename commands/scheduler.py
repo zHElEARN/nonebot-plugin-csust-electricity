@@ -108,7 +108,7 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
     )
 
     # 保存用户的查询时间
-    data_manager.scheduled_tasks[prefix] = {id: time_str}
+    data_manager.scheduled_tasks[prefix][id] = time_str
     data_manager.save_scheduled_tasks()
     await schedule_query.finish(
         f"已成功设置定时查询，每天 {time_str} 自动查询您的宿舍电量"

@@ -38,7 +38,7 @@ async def handle_bind_room(event: Event, args: Message = CommandArg()):
     if campus not in building_data or building_name not in building_data[campus]:
         await bind_room.finish("校区或宿舍楼名称错误，请检查输入")
 
-    data_manager.binding_data[prefix] = {id: [campus, building_name, room_id]}
+    data_manager.binding_data[prefix][id] = [campus, building_name, room_id]
     data_manager.save_binding_data()
     await bind_room.finish(
         f"绑定成功！已将{'您的QQ号' if 'user' == prefix else '本群号'}与{campus}校区 {building_name} {room_id} 绑定"
