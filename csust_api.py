@@ -128,4 +128,4 @@ if __name__ == "__main__":
     room_id = "A544"
 
     electricity_data = fetch_electricity_data(campus, building_id, room_id)
-    print(electricity_data)
+    logger.info(electricity_data)

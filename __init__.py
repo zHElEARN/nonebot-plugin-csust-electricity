@@ -19,6 +19,8 @@ from nonebot.rule import to_me
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
 
+from .data_manager import DataManager
+
 require("nonebot_plugin_txt2img")
 from nonebot_plugin_txt2img import Txt2Img
 
@@ -48,85 +50,29 @@ def ensure_data_folder_exists():
 
 
 building_data = fetch_building_data()
-binding_data = {}
-query_limit_data = {}
-scheduled_tasks = {}
-electricity_data = {}
 
-
-def load_binding_data():
-    global binding_data
-    try:
-        with open(os.path.join(config.data_storage_path, "binding_data.json"), "r", encoding="utf-8") as f:
-            binding_data = json.load(f)
-    except FileNotFoundError:
-        binding_data = {}
-
-
-def save_binding_data():
-    with open(os.path.join(config.data_storage_path, "binding_data.json"), "w", encoding="utf-8") as f:
-        json.dump(binding_data, f, ensure_ascii=False, indent=4)
-
-
-def load_scheduled_tasks():
-    global scheduled_tasks
-    try:
-        with open(os.path.join(config.data_storage_path, "scheduled_tasks.json"), "r", encoding="utf-8") as f:
-            scheduled_tasks = json.load(f)
-    except FileNotFoundError:
-        scheduled_tasks = {}
-
-
-def save_scheduled_tasks():
-    with open(os.path.join(config.data_storage_path, "scheduled_tasks.json"), "w", encoding="utf-8") as f:
-        json.dump(scheduled_tasks, f, ensure_ascii=False, indent=4)
-
-
-def load_query_limit_data():
-    global query_limit_data
-    try:
-        with open(os.path.join(config.data_storage_path, "query_limit_data.json"), "r", encoding="utf-8") as f:
-            query_limit_data = json.load(f)
-    except FileNotFoundError:
-        query_limit_data = {}
-
-
-def save_query_limit_data():
-    with open(os.path.join(config.data_storage_path, "query_limit_data.json"), "w", encoding="utf-8") as f:
-        json.dump(query_limit_data, f, ensure_ascii=False, indent=4)
-
-
-def load_electricity_data():
-    global electricity_data
-    try:
-        with open(os.path.join(config.data_storage_path, "electricity_data.json"), "r", encoding="utf-8") as f:
-            electricity_data = json.load(f)
-    except FileNotFoundError:
-        electricity_data = {}
-
-
-def save_electricity_data():
-    with open(os.path.join(config.data_storage_path, "electricity_data.json"), "w", encoding="utf-8") as f:
-        json.dump(electricity_data, f, ensure_ascii=False, indent=4)
+data_manager = DataManager(config.data_storage_path)
 
 
 def store_electricity_data(campus, building_name, room_id, remaining_power):
-    load_electricity_data()
+    data_manager.load_electricity_data()
     room_key = f"{campus}-{building_name}-{room_id}"
     timestamp = datetime.now().isoformat()
     new_entry = {"timestamp": timestamp, "electricity": remaining_power}
 
     if (
-        room_key not in electricity_data
-        or electricity_data[room_key][-1]["electricity"] != remaining_power
+        room_key not in data_manager.electricity_data
+        or data_manager.electricity_data[room_key][-1]["electricity"] != remaining_power
     ):
-        if room_key not in electricity_data:
-            electricity_data[room_key] = []
-        electricity_data[room_key].append(new_entry)
-        save_electricity_data()
+        if room_key not in data_manager.electricity_data:
+            data_manager.electricity_data[room_key] = []
+        data_manager.electricity_data[room_key].append(new_entry)
+        data_manager.save_electricity_data()
 
-    if len(electricity_data[room_key]) >= 2:
-        estimated_time = estimate_discharging_time(electricity_data[room_key])
+    if len(data_manager.electricity_data[room_key]) >= 2:
+        estimated_time = estimate_discharging_time(
+            data_manager.electricity_data[room_key]
+        )
         if estimated_time:
             return estimated_time
 
@@ -157,10 +103,10 @@ def estimate_discharging_time(electricity_records):
 
 ensure_data_folder_exists()
 
-load_binding_data()
-load_scheduled_tasks()
-load_query_limit_data()
-load_electricity_data()
+data_manager.load_binding_data()
+data_manager.load_scheduled_tasks()
+data_manager.load_query_limit_data()
+data_manager.load_electricity_data()
 
 # 创建命令
 electricity = on_command(
@@ -221,11 +167,11 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
         await schedule_query.finish("时间格式错误，请使用 例如：定时查询 08:00")
 
     # 检查用户是否绑定宿舍
-    if user_id not in binding_data:
+    if user_id not in data_manager.binding_data:
         await schedule_query.finish("请先绑定宿舍信息，再设置定时查询")
 
     # 设置或更新定时任务
-    if user_id in scheduled_tasks:
+    if user_id in data_manager.scheduled_tasks:
         scheduler.remove_job(job_id=user_id)
 
     # 创建定时任务
@@ -240,8 +186,8 @@ async def handle_schedule_query(event: Event, args: Message = CommandArg()):
     )
 
     # 保存用户的查询时间
-    scheduled_tasks[user_id] = time_str
-    save_scheduled_tasks()
+    data_manager.scheduled_tasks[user_id] = time_str
+    data_manager.save_scheduled_tasks()
     await schedule_query.finish(
         f"已成功设置定时查询，每天 {time_str} 自动查询您的宿舍电量"
     )
@@ -254,20 +200,20 @@ async def handle_cancel_schedule(event: Event):
     elif isinstance(event, GroupMessageEvent):
         user_id = f"group-{event.group_id}"
 
-    if user_id in scheduled_tasks:
+    if user_id in data_manager.scheduled_tasks:
         scheduler.remove_job(job_id=user_id)
-        del scheduled_tasks[user_id]
-        save_scheduled_tasks()
+        del data_manager.scheduled_tasks[user_id]
+        data_manager.save_scheduled_tasks()
         await cancel_schedule.finish("已成功取消您的定时查询任务")
     else:
         await cancel_schedule.finish("您没有设置定时查询任务")
 
 
 async def execute_scheduled_query(user_id: str):
-    if user_id not in binding_data:
+    if user_id not in data_manager.binding_data:
         return
 
-    campus, building_name, room_id = binding_data[user_id]
+    campus, building_name, room_id = data_manager.binding_data[user_id]
     electricity_data = fetch_electricity_data(
         campus, building_data[campus][building_name], room_id
     )
@@ -297,7 +243,7 @@ async def execute_scheduled_query(user_id: str):
 
 # 加载定时任务到scheduler
 def load_tasks_to_scheduler():
-    for user_id, time_str in scheduled_tasks.items():
+    for user_id, time_str in data_manager.scheduled_tasks.items():
         query_time = datetime.strptime(time_str, "%H:%M").time()
         scheduler.add_job(
             func=execute_scheduled_query,
@@ -336,8 +282,8 @@ async def handle_electricity(event: Event, args: Message = CommandArg()):
 
     # 检查用户是否提供了查询参数
     if not args_text:
-        if user_id in binding_data:
-            campus, building_name, room_id = binding_data[user_id]
+        if user_id in data_manager.binding_data:
+            campus, building_name, room_id = data_manager.binding_data[user_id]
             await query_electricity(
                 campus, building_name, room_id, electricity, query_limit_identifier
             )
@@ -377,7 +323,11 @@ async def query_electricity(
     building_id = building_data[campus][building_name]
     new_electricity_data = fetch_electricity_data(campus, building_id, room_id)
 
-    if new_electricity_data and "剩余电量" in new_electricity_data and new_electricity_data["剩余电量"] != "未知":
+    if (
+        new_electricity_data
+        and "剩余电量" in new_electricity_data
+        and new_electricity_data["剩余电量"] != "未知"
+    ):
         remaining_power = new_electricity_data["剩余电量"]
         update_query_limit(query_limit_identifier)  # 更新查询记录
 
@@ -397,33 +347,33 @@ async def query_electricity(
 
 def check_query_limit(identifier):
     current_time = time.time()
-    if identifier in query_limit_data:
-        last_time, count = query_limit_data[identifier]
+    if identifier in data_manager.query_limit_data:
+        last_time, count = data_manager.query_limit_data[identifier]
         # 若在一小时内查询次数达到两次
         if current_time - last_time < 3600 and count >= 2:
             return False
         # 若超过一小时，则重置查询次数
         elif current_time - last_time >= 3600:
-            query_limit_data[identifier] = (current_time, 0)
-            save_query_limit_data()
+            data_manager.query_limit_data[identifier] = (current_time, 0)
+            data_manager.save_query_limit_data()
             return True
     else:
-        query_limit_data[identifier] = (current_time, 0)
-        save_query_limit_data()
+        data_manager.query_limit_data[identifier] = (current_time, 0)
+        data_manager.save_query_limit_data()
     return True
 
 
 def update_query_limit(identifier):
     current_time = time.time()
-    if identifier in query_limit_data:
-        last_time, count = query_limit_data[identifier]
+    if identifier in data_manager.query_limit_data:
+        last_time, count = data_manager.query_limit_data[identifier]
         if current_time - last_time < 3600:
-            query_limit_data[identifier] = (last_time, count + 1)
+            data_manager.query_limit_data[identifier] = (last_time, count + 1)
         else:
-            query_limit_data[identifier] = (current_time, 1)
+            data_manager.query_limit_data[identifier] = (current_time, 1)
     else:
-        query_limit_data[identifier] = (current_time, 1)
-    save_query_limit_data()
+        data_manager.query_limit_data[identifier] = (current_time, 1)
+    data_manager.save_query_limit_data()
 
 
 @bind_room.handle()
@@ -445,8 +395,8 @@ async def handle_bind_room(event: Event, args: Message = CommandArg()):
     if campus not in building_data or building_name not in building_data[campus]:
         await bind_room.finish("校区或宿舍楼名称错误，请检查输入")
 
-    binding_data[user_id] = [campus, building_name, room_id]
-    save_binding_data()
+    data_manager.binding_data[user_id] = [campus, building_name, room_id]
+    data_manager.save_binding_data()
     await bind_room.finish(
         f"绑定成功！已将{'您的QQ号' if 'user-' in user_id else '本群号'}与{campus}校区 {building_name} {room_id} 绑定"
     )
@@ -459,9 +409,9 @@ async def handle_unbind_room(event: Event):
     elif isinstance(event, GroupMessageEvent):
         user_id = f"group-{event.group_id}"
 
-    if user_id in binding_data:
-        del binding_data[user_id]
-        save_binding_data()
+    if user_id in data_manager.binding_data:
+        del data_manager.binding_data[user_id]
+        data_manager.save_binding_data()
         await unbind_room.finish("解绑成功，已解除您的宿舍绑定信息")
     else:
         await unbind_room.finish("您未绑定宿舍信息，无需解绑")
