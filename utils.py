@@ -13,11 +13,11 @@ def estimate_discharging_time(electricity_records):
 
     # 提取时间戳和电量值
     timestamps = [
-        datetime.fromisoformat(record["timestamp"]).timestamp()
+        datetime.fromisoformat(record[0]).timestamp()
         for record in electricity_records
     ]
     electricity_values = [
-        float(record["electricity"].split()[0]) for record in electricity_records
+        record[1] for record in electricity_records
     ]
 
     # 找到最近一次电量增加（充值）的索引
@@ -50,11 +50,12 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
     data_manager.load_electricity_data()
     room_key = f"{campus}-{building_name}-{room_id}"
     timestamp = datetime.now().isoformat()
-    new_entry = {"timestamp": timestamp, "electricity": remaining_power}
+    # new_entry = {"timestamp": timestamp, "electricity": remaining_power}
+    new_entry = [timestamp, remaining_power]
 
     if (
         room_key not in data_manager.electricity_data
-        or data_manager.electricity_data[room_key][-1]["electricity"] != remaining_power
+        or data_manager.electricity_data[room_key][-1][1] != remaining_power
     ):
         if room_key not in data_manager.electricity_data:
             data_manager.electricity_data[room_key] = []
@@ -76,14 +77,9 @@ async def query_electricity(
         await handler.finish("校区或宿舍楼名称错误，请检查输入")
 
     building_id = building_data[campus][building_name]
-    new_electricity_data = fetch_electricity_data(campus, building_id, room_id)
+    remaining_power = fetch_electricity_data(campus, building_id, room_id)
 
-    if (
-        new_electricity_data
-        and "剩余电量" in new_electricity_data
-        and new_electricity_data["剩余电量"] != "未知"
-    ):
-        remaining_power = new_electricity_data["剩余电量"]
+    if remaining_power != "未知":
         update_query_limit(query_limit_identifier)  # 更新查询记录
 
         # 保存电量数据
@@ -91,7 +87,7 @@ async def query_electricity(
             campus, building_name, room_id, remaining_power
         )
 
-        msg = f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}"
+        msg = f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}度"
         if estimated_time:
             estimated_time_str = estimated_time.strftime("%Y-%m-%d %H:%M:%S")
             msg += f"\n预计电量耗尽时间：{estimated_time_str}"

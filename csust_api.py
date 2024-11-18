@@ -99,18 +99,10 @@ def fetch_electricity_data(campus, building_id, room_id):
         result = response.json()
         info = result.get("query_elec_roominfo", {})
 
-        room = info.get("room", {}).get("room", "未知宿舍")
         electricity = info.get("errmsg", "未知电量")
 
         match = re.search(r"(\d+(\.\d+)?)", electricity)
-        if match:
-            electricity_value = match.group()
-        else:
-            electricity_value = "未知"
-        return {
-            "宿舍": room,
-            "剩余电量": f"{electricity_value} 度",
-        }
+        return float(match.group()) if match else "未知"
 
     except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
         logger.info(f"电量查询失败: {e}")
@@ -120,12 +112,12 @@ def fetch_electricity_data(campus, building_id, room_id):
 # 主函数，用于直接运行脚本时调用
 if __name__ == "__main__":
     # 示例：查询楼栋信息
-    fetch_building_data()
+    # fetch_building_data()
 
     # 示例：查询宿舍电量
     campus = "云塘"
     building_id = "557"
-    room_id = "A544"
+    room_id = "A543"
 
     electricity_data = fetch_electricity_data(campus, building_id, room_id)
     logger.info(electricity_data)
