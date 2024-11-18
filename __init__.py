@@ -4,6 +4,7 @@ from .commands.scheduler import *
 from .commands.bind import *
 from .commands.electricity import *
 from .commands.help import *
+from .commands.test import *
 
 import nonebot
 from nonebot import get_plugin_config
