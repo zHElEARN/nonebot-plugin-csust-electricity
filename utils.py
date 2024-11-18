@@ -6,26 +6,45 @@ import numpy
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
 
+
 def estimate_discharging_time(electricity_records):
     if len(electricity_records) < 2:
         return None
 
+    # 提取时间戳和电量值
     timestamps = [
         datetime.fromisoformat(record["timestamp"]).timestamp()
         for record in electricity_records
     ]
-    electricity = [
+    electricity_values = [
         float(record["electricity"].split()[0]) for record in electricity_records
     ]
 
-    x = numpy.array(timestamps).reshape(-1, 1)
-    y = numpy.array(electricity).reshape(-1, 1)
+    # 找到最近一次电量增加（充值）的索引
+    last_recharge_index = 0
+    for i in range(1, len(electricity_values)):
+        if electricity_values[i] > electricity_values[i - 1]:
+            last_recharge_index = i
 
+    # 使用最近一次充值后的数据进行估计
+    x = numpy.array(timestamps[last_recharge_index:]).reshape(-1, 1)
+    y = numpy.array(electricity_values[last_recharge_index:]).reshape(-1, 1)
+
+    if len(x) < 2:
+        return None
+
+    # 进行线性回归
     model = LinearRegression().fit(x, y)
-    predicted_time_seconds = (model.intercept_ / -model.coef_)[0][0]
 
+    # 确保电量在下降，否则无法估计
+    if model.coef_[0][0] >= 0:
+        return None
+
+    # 计算电量耗尽的时间
+    predicted_time_seconds = (model.intercept_ / -model.coef_)[0][0]
     predicted_datetime = datetime.fromtimestamp(predicted_time_seconds)
     return predicted_datetime
+
 
 def store_electricity_data(campus, building_name, room_id, remaining_power):
     data_manager.load_electricity_data()
@@ -48,6 +67,7 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
         )
         if estimated_time:
             return estimated_time
+
 
 async def query_electricity(
     campus, building_name, room_id, handler, query_limit_identifier
