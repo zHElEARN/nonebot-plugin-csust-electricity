@@ -3,6 +3,7 @@ from .config import Config
 from .commands.scheduler import *
 from .commands.bind import *
 from .commands.electricity import *
+from .commands.help import *
 
 import nonebot
 from nonebot import get_plugin_config
@@ -24,7 +25,4 @@ sub_plugins = nonebot.load_plugins(
 )
 
 
-data_manager.load_binding_data()
-data_manager.load_scheduled_tasks()
 data_manager.load_query_limit_data()
-data_manager.load_electricity_data()

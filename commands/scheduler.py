@@ -19,6 +19,7 @@ from nonebot_plugin_apscheduler import scheduler
 
 data_manager.load_scheduled_tasks()
 
+
 def load_tasks_to_scheduler():
     for prefix in ["user", "group"]:
         for id, time_str in data_manager.scheduled_tasks[prefix].items():

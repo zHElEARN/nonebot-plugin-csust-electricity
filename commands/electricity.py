@@ -16,6 +16,8 @@ from nonebot.adapters.onebot.v11 import (
 require("nonebot_plugin_txt2img")
 from nonebot_plugin_txt2img import Txt2Img
 
+data_manager.load_electricity_data()
+
 electricity = on_command(
     "电量", aliases={"电量查询", "查电量", "查询电量"}, rule=to_me()
 )

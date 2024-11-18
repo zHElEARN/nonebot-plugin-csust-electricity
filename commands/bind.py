@@ -11,6 +11,8 @@ from nonebot.adapters.onebot.v11 import (
     PrivateMessageEvent,
 )
 
+data_manager.load_binding_data()
+
 bind_room = on_command("绑定宿舍", aliases={"绑定"}, rule=to_me())
 unbind_room = on_command("解绑宿舍", aliases={"解绑"}, rule=to_me())
 

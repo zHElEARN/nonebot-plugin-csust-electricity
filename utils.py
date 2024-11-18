@@ -47,7 +47,6 @@ def estimate_discharging_time(electricity_records):
 
 
 def store_electricity_data(campus, building_name, room_id, remaining_power):
-    data_manager.load_electricity_data()
     room_key = f"{campus}-{building_name}-{room_id}"
     timestamp = datetime.now().isoformat()
     new_entry = [timestamp, remaining_power]
