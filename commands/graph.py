@@ -14,13 +14,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 
-plt.rcParams["font.sans-serif"] = ["SimHei"]  # 用来正常显示中文标签
+plt.rcParams["font.sans-serif"] = ["Noto Sans Mono CJK SC"]  # 用来正常显示中文标签
 plt.rcParams["axes.unicode_minus"] = False  # 用来正常显示负号
 
-test = on_command("测试", rule=to_me())
+graph_command = on_command("图表", rule=to_me())
 
 
-@test.handle()
+@graph_command.handle()
 async def handle_test(event: Event):
     if isinstance(event, PrivateMessageEvent):
         prefix = "user"
@@ -30,7 +30,7 @@ async def handle_test(event: Event):
         id = str(event.group_id)
 
     if not id in data_manager.binding_data[prefix]:
-        await test.finish("未检测到绑定信息，请先绑定宿舍")
+        await graph_command.finish("未检测到绑定信息，请先绑定宿舍")
         return
 
     campus, building_name, room_id = data_manager.binding_data[prefix][id]
@@ -118,4 +118,4 @@ async def handle_test(event: Event):
     img_bytes_io = io.BytesIO()
     plt.savefig(img_bytes_io, format="png")
 
-    await test.finish(MessageSegment.image(img_bytes_io))
+    await graph_command.finish(MessageSegment.image(img_bytes_io))
