@@ -72,7 +72,7 @@ async def query_electricity(
     campus, building_name, room_id, handler, prefix, id
 ):
     if campus not in building_data or building_name not in building_data[campus]:
-        await handler.finish("校区或宿舍楼名称错误，请检查输入")
+        await handler.finish("校区或宿舍楼名称错误，请检查输入\n发送 “/电量 校区” 可以查看校区宿舍楼")
 
     building_id = building_data[campus][building_name]
     remaining_power = fetch_electricity_data(campus, building_id, room_id)
