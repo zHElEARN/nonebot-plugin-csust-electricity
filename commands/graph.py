@@ -1,3 +1,4 @@
+from matplotlib.dates import date2num
 from ..data_manager import data_manager
 
 from nonebot import on_command
@@ -51,9 +52,13 @@ async def handle_test(event: Event):
 
     segments.append(current_segment)  # 添加最后一段
 
+    vibrant_cmap = plt.cm.Set1
+    num_colors = max(9, len(segments))
+    colors = vibrant_cmap(np.linspace(0, 1, num_colors))
+
     plt.figure(figsize=(12, 8))
 
-    for idx, segment in enumerate(segments):
+    for idx, (segment, color) in enumerate(zip(segments, colors)):
         seg_times = [datetime.fromisoformat(record[0]) for record in segment]
         seg_values = [record[1] for record in segment]
 
@@ -63,12 +68,19 @@ async def handle_test(event: Event):
         if len(seg_times) > 1:
             model = LinearRegression()
             model.fit(time_stamps, values_array)
-            fitted_values = model.predict(time_stamps)
 
-            plt.plot(
-                seg_times,
-                fitted_values,
+            m = model.coef_[0][0]
+            b = model.intercept_[0]
+
+            ref_time_num = date2num(seg_times[0])
+            ref_value = seg_values[0]
+            slope_per_day = m * 86400
+
+            plt.axline(
+                (ref_time_num, ref_value),
+                slope=slope_per_day,
                 linestyle="--",
+                color=color,
                 label=f"Segment {idx + 1} (Fit)",
             )
 
@@ -83,34 +95,32 @@ async def handle_test(event: Event):
 
             # 标注平均功率（度/小时 和 瓦特）
             mid_time = seg_times[len(seg_times) // 2]
-            mid_value = (fitted_values[0] + fitted_values[-1]) / 2
+            mid_value = np.mean(seg_values)
             label = f"{avg_power_kWh:.2f} 度/小时\n({avg_power_W:.2f} W)"
-            plt.text(mid_time, mid_value, label, color="red", fontsize=18, ha="center")
+            plt.text(mid_time, mid_value, label, color=color, fontsize=18, ha="center")
 
-            # 计算预计电量耗尽时间
-            m = model.coef_[0][0]  # 斜率 (度/秒)
-            b = model.intercept_[0]  # 截距 (度)
+            if m != 0:
+                y0_crossing_time_ts = -b / m
+                y0_crossing_time = datetime.fromtimestamp(y0_crossing_time_ts)
 
-            if m != 0:  # 防止斜率为零的情况
-                estimated_end_time_ts = -b / m  # 预测电量为0时的时间戳
-                estimated_end_time = datetime.fromtimestamp(estimated_end_time_ts)
-
-                # 标注预计耗尽时间
+                plt.scatter([y0_crossing_time], [0], color=color, zorder=5)
                 plt.text(
-                    mid_time,
-                    mid_value - 5,
-                    f"预计耗尽时间: {estimated_end_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                    color="blue",
-                    fontsize=16,
+                    y0_crossing_time,
+                    0,
+                    y0_crossing_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    color=color,
+                    fontsize=9,
                     ha="center",
+                    va="bottom",
                 )
 
-        plt.scatter(seg_times, seg_values, label=f"Segment {idx + 1}")
+        plt.scatter(seg_times, seg_values, label=f"Segment {idx + 1}", color=color)
 
-    plt.title(f"数值变化与拟合 - {location}", fontsize=16)
+    plt.title(f"电量变化与拟合 - {location}", fontsize=16)
     plt.xlabel("时间", fontsize=12)
-    plt.ylabel("数值 (度)", fontsize=12)
-    plt.xticks(rotation=45)
+    plt.ylabel("电量 (度)", fontsize=12)
+    plt.ylim(bottom=0)
+    # plt.xticks(rotation=45)
     plt.grid(True)
     plt.legend()
 
