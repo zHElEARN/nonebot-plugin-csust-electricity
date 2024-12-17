@@ -77,7 +77,7 @@ async def query_electricity(
     building_id = building_data[campus][building_name]
     remaining_power = fetch_electricity_data(campus, building_id, room_id)
 
-    if remaining_power != "未知":
+    if remaining_power is not None:
         update_query_limit(prefix, id)  # 更新查询记录
 
         # 保存电量数据
@@ -91,7 +91,7 @@ async def query_electricity(
             msg += f"\n预计电量耗尽时间：{estimated_time_str}"
         await handler.finish(msg)
     else:
-        await handler.finish("未能获取电量信息，请检查宿舍号是否正确")
+        await handler.finish("未能获取电量信息，请检查宿舍号是否正确，或者可能是机器人出现错误")
 
 
 def check_query_limit(prefix, id):

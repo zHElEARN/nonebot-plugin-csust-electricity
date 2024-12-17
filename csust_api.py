@@ -102,11 +102,11 @@ def fetch_electricity_data(campus, building_id, room_id):
         electricity = info.get("errmsg", "未知电量")
 
         match = re.search(r"(\d+(\.\d+)?)", electricity)
-        return float(match.group()) if match else "未知"
+        return float(match.group()) if match else None
 
     except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
         logger.info(f"电量查询失败: {e}")
-        return {"error": f"查询失败: {e}"}
+        return None
 
 
 # 主函数，用于直接运行脚本时调用
