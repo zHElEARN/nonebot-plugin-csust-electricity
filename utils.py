@@ -13,12 +13,9 @@ def estimate_discharging_time(electricity_records):
 
     # 提取时间戳和电量值
     timestamps = [
-        datetime.fromisoformat(record[0]).timestamp()
-        for record in electricity_records
+        datetime.fromisoformat(record[0]).timestamp() for record in electricity_records
     ]
-    electricity_values = [
-        record[1] for record in electricity_records
-    ]
+    electricity_values = [record[1] for record in electricity_records]
 
     # 找到最近一次电量增加（充值）的索引
     last_recharge_index = 0
@@ -68,16 +65,16 @@ def store_electricity_data(campus, building_name, room_id, remaining_power):
             return estimated_time
 
 
-async def query_electricity(
-    campus, building_name, room_id, handler, prefix, id
-):
+async def query_electricity(campus, building_name, room_id, handler, prefix, id):
     if campus not in building_data or building_name not in building_data[campus]:
-        await handler.finish("校区或宿舍楼名称错误，请检查输入\n发送 “/电量 校区” 可以查看校区宿舍楼")
+        await handler.finish(
+            "校区或宿舍楼名称错误，请检查输入\n发送 “/电量 校区” 可以查看校区宿舍楼"
+        )
 
     building_id = building_data[campus][building_name]
     remaining_power = fetch_electricity_data(campus, building_id, room_id)
 
-    if remaining_power is not None:
+    if isinstance(remaining_power, float):
         update_query_limit(prefix, id)  # 更新查询记录
 
         # 保存电量数据
@@ -85,13 +82,17 @@ async def query_electricity(
             campus, building_name, room_id, remaining_power
         )
 
-        msg = f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}度"
+        msg = (
+            f"{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}度"
+        )
         if estimated_time:
             estimated_time_str = estimated_time.strftime("%Y-%m-%d %H:%M:%S")
             msg += f"\n预计电量耗尽时间：{estimated_time_str}"
         await handler.finish(msg)
     else:
-        await handler.finish("未能获取电量信息，请检查宿舍号是否正确，或者可能是机器人出现错误")
+        await handler.finish(
+            f"未能获取电量信息，请检查宿舍号是否正确\n错误信息：{remaining_power}"
+        )
 
 
 def check_query_limit(prefix, id):
