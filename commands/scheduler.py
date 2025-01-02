@@ -45,7 +45,7 @@ async def execute_scheduled_query(prefix, id):
         campus, building_data[campus][building_name], room_id
     )
 
-    if remaining_power != "未知":
+    if isinstance(remaining_power, float):
         msg = f"定时查询提醒：\n{campus}校区 {building_name} {room_id} 的剩余电量为：{remaining_power}度"
 
         estimated_time = store_electricity_data(
@@ -61,6 +61,15 @@ async def execute_scheduled_query(prefix, id):
             await nonebot.get_bot().send_private_msg(user_id=int(id), message=msg)
         elif prefix == "group":
             await nonebot.get_bot().send_group_msg(group_id=int(id), message=msg)
+    else:
+        if prefix == "user":
+            await nonebot.get_bot().send_private_msg(
+                user_id=int(id), message=f"定时查询失败：{remaining_power}"
+            )
+        elif prefix == "group":
+            await nonebot.get_bot().send_group_msg(
+                group_id=int(id), message=f"定时查询失败：{remaining_power}"
+            )
 
 
 load_tasks_to_scheduler()
