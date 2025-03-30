@@ -5,88 +5,71 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.dates import DateFormatter, DayLocator, date2num
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import (
-    Event,
-    GroupMessageEvent,
-    MessageSegment,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.onebot.v11 import Event, MessageSegment
 from nonebot.exception import FinishedException
 from nonebot.rule import to_me
 from sklearn.linear_model import LinearRegression
 
-from ..db.electricity_db import Binding, ElectricityHistory, SessionLocal
+from ..db.electricity_db import ElectricityHistory, SessionLocal
+from ..utils.common import get_binding, get_sender_info
 
 plt.rcParams["font.sans-serif"] = ["Noto Sans Mono CJK SC"]  # 用来正常显示中文标签
 plt.rcParams["axes.unicode_minus"] = False  # 用来正常显示负号
 # 添加以下设置确保不会在任务栏中显示窗口
-plt.switch_backend('Agg')
+plt.switch_backend("Agg")
 
 graph_command = on_command("图表", rule=to_me())
 
 
 @graph_command.handle()
 async def handle_graph(event: Event):
-    # 确定是私聊消息还是群消息
-    if isinstance(event, PrivateMessageEvent):
-        qq_number = event.get_user_id()
-        group_number = None
-    elif isinstance(event, GroupMessageEvent):
-        qq_number = None
-        group_number = str(event.group_id)
-    else:
-        await graph_command.finish("不支持的消息类型")
-        return
-
-    # 创建数据库会话
-    session = SessionLocal()
     try:
-        # 查询绑定信息
-        binding_query = session.query(Binding)
-        if qq_number:
-            binding_query = binding_query.filter(Binding.qq_number == qq_number)
-        else:
-            binding_query = binding_query.filter(Binding.group_number == group_number)
+        # 使用utils.common中的函数获取发送者信息
+        sender_type, sender_id = get_sender_info(event)
 
-        binding = binding_query.first()
+        # 使用utils.common中的函数获取绑定信息
+        binding = get_binding(sender_type, sender_id)
 
         if not binding:
             await graph_command.finish("未检测到绑定信息，请先绑定宿舍")
             return
 
-        # 查询电量历史记录
-        history_records = (
-            session.query(ElectricityHistory)
-            .filter(
-                ElectricityHistory.campus == binding.campus,
-                ElectricityHistory.building == binding.building,
-                ElectricityHistory.room == binding.room,
+        # 创建数据库会话
+        session = SessionLocal()
+        try:
+            # 查询电量历史记录
+            history_records = (
+                session.query(ElectricityHistory)
+                .filter(
+                    ElectricityHistory.campus == binding.campus,
+                    ElectricityHistory.building == binding.building,
+                    ElectricityHistory.room == binding.room,
+                )
+                .order_by(ElectricityHistory.record_time)
+                .all()
             )
-            .order_by(ElectricityHistory.record_time)
-            .all()
-        )
 
-        if not history_records:
-            await graph_command.finish("没有查询到电量记录")
-            return
+            if not history_records:
+                await graph_command.finish("没有查询到电量记录")
+                return
 
-        # 转换记录为时间和电量值列表
-        records = [
-            (record.record_time, record.electricity) for record in history_records
-        ]
+            # 转换记录为时间和电量值列表
+            records = [
+                (record.record_time, record.electricity) for record in history_records
+            ]
 
-        location = f"{binding.campus}-{binding.building}-{binding.room}"
+            location = f"{binding.campus}-{binding.building}-{binding.room}"
 
-        # 生成图表
-        img_bytes_io = generate_graph(records, location)
+            # 生成图表
+            img_bytes_io = generate_graph(records, location)
 
-        await graph_command.finish(MessageSegment.image(img_bytes_io))
+            await graph_command.finish(MessageSegment.image(img_bytes_io))
+        finally:
+            session.close()
     except FinishedException:
         pass
     except Exception as e:
         await graph_command.finish(f"生成图表时发生错误: {str(e)}")
-    finally:
-        session.close()
 
 
 def generate_graph(records, location):
@@ -110,12 +93,12 @@ def generate_graph(records, location):
 
     # 创建图表并设置大小
     fig, ax = plt.subplots(figsize=(12, 8))
-    
+
     # 获取所有记录的日期范围
     all_dates = [record[0] for record in records]
     min_date = min(all_dates)
     max_date = max(all_dates)
-    
+
     # 对于预测到电量为0的点，可能需要更大的时间范围
     prediction_dates = []
 
@@ -127,6 +110,7 @@ def generate_graph(records, location):
         values_array = np.array(seg_values).reshape(-1, 1)
 
         if len(seg_times) > 1:
+            # 使用线性回归拟合数据
             model = LinearRegression()
             model.fit(time_stamps, values_array)
 
@@ -145,29 +129,28 @@ def generate_graph(records, location):
                 label=f"段 {idx + 1} (拟合)",
             )
 
-            duration_hours = (
-                time_stamps[-1, 0] - time_stamps[0, 0]
-            ) / 3600  # 持续时间（小时）
-            energy_used = seg_values[0] - seg_values[-1]  # 消耗的电量（度）
-            avg_power_kWh = (
-                energy_used / duration_hours if duration_hours > 0 else 0
-            )  # 平均功率（度/小时）
-            avg_power_W = avg_power_kWh * 1000  # 平均功率（瓦特）
+            # 计算功率信息
+            duration_hours = (time_stamps[-1, 0] - time_stamps[0, 0]) / 3600
+            energy_used = seg_values[0] - seg_values[-1]
+            avg_power_kWh = energy_used / duration_hours if duration_hours > 0 else 0
+            avg_power_W = avg_power_kWh * 1000
 
-            # 标注平均功率（度/小时 和 瓦特）
+            # 标注平均功率
             mid_time = seg_times[len(seg_times) // 2]
             mid_value = np.mean(seg_values)
             label = f"{avg_power_kWh:.2f} 度/小时\n({avg_power_W:.2f} W)"
             ax.text(mid_time, mid_value, label, color=color, fontsize=12, ha="center")
 
-            # 计算与x轴的交点（电量为0的时间点）
-            if m < 0:  # 只有当斜率为负数（电量减少）时才计算交点
+            # 预测电量耗尽时间点
+            if m < 0:
                 y0_crossing_time_ts = -b / m
                 y0_crossing_time = datetime.fromtimestamp(y0_crossing_time_ts)
                 prediction_dates.append(y0_crossing_time)
-                
+
                 # 绘制预测的零点
-                ax.scatter([y0_crossing_time], [0], color=color, zorder=5, s=50, marker='X')
+                ax.scatter(
+                    [y0_crossing_time], [0], color=color, zorder=5, s=50, marker="X"
+                )
                 ax.text(
                     y0_crossing_time,
                     0,
@@ -176,7 +159,7 @@ def generate_graph(records, location):
                     fontsize=9,
                     ha="center",
                     va="bottom",
-                    rotation=45
+                    rotation=45,
                 )
 
         ax.scatter(seg_times, seg_values, label=f"段 {idx + 1}", color=color)
@@ -186,25 +169,25 @@ def generate_graph(records, location):
         max_prediction = max(prediction_dates)
         if max_prediction > max_date:
             max_date = max_prediction
-            
+
     # 确保图表范围至少包括一周
     date_range = max_date - min_date
     if date_range.days < 7:
         max_date = min_date + timedelta(days=7)
-    
+
     # 再额外增加两天，确保能看到预测点
     max_date += timedelta(days=2)
-    
+
     ax.set_xlim(min_date, max_date)
-    
+
     # 设置每天一个网格
     ax.xaxis.set_major_locator(DayLocator())
-    ax.xaxis.set_major_formatter(DateFormatter('%m-%d'))
-    ax.grid(True, which='major', axis='both', linestyle='-')
-    
+    ax.xaxis.set_major_formatter(DateFormatter("%m-%d"))
+    ax.grid(True, which="major", axis="both", linestyle="-")
+
     # 旋转x轴日期标签以避免重叠
-    plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-    
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+
     ax.set_title(f"电量变化与拟合 - {location}", fontsize=16)
     ax.set_xlabel("日期", fontsize=12)
     ax.set_ylabel("电量 (度)", fontsize=12)

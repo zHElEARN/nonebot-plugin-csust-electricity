@@ -1,7 +1,3 @@
-import asyncio
-from datetime import datetime
-from typing import Dict, List, Tuple
-
 from nonebot import get_bot, require
 from nonebot.log import logger
 
@@ -9,9 +5,8 @@ require("nonebot_plugin_apscheduler")
 
 from nonebot_plugin_apscheduler import scheduler
 
-from ..commands.query import predict_empty_time, update_electricity_history
-from ..csust_api import csust_api
 from ..db.electricity_db import Binding, Schedule, SessionLocal
+from ..utils.electricity import query_electricity
 
 
 async def query_and_send(binding_id: str):
@@ -23,18 +18,10 @@ async def query_and_send(binding_id: str):
                 logger.warning(f"定时任务: 绑定ID {binding_id} 不存在")
                 return
 
-        # 获取电量信息
-        electricity_info = csust_api.get_electricity(
+        # 使用工具函数获取电量信息和预测时间
+        electricity_info, empty_time = query_electricity(
             binding.campus, binding.building, binding.room
         )
-
-        # 更新电量历史记录
-        update_electricity_history(
-            electricity_info, binding.campus, binding.building, binding.room
-        )
-
-        # 预测电量耗尽时间
-        empty_time = predict_empty_time(binding.campus, binding.building, binding.room)
 
         # 构建消息
         message = (
