@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from nonebot import get_plugin_config
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -13,6 +14,8 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+
+from ..config import Config
 
 Base = declarative_base()
 
@@ -32,7 +35,9 @@ class Binding(Base):
     building = Column(String(50), nullable=False, comment="楼栋名称")
     room = Column(String(20), nullable=False, comment="房间号")
 
-    schedules = relationship("Schedule", back_populates="binding", cascade="all, delete-orphan")
+    schedules = relationship(
+        "Schedule", back_populates="binding", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -59,10 +64,10 @@ class Schedule(Base):
         comment="主键UUID",
     )
     binding_id = Column(
-        String(36), 
+        String(36),
         ForeignKey("bindings.id", ondelete="CASCADE"),
         nullable=False,
-        comment="绑定ID"
+        comment="绑定ID",
     )
     schedule_time: str = Column(String(5), nullable=False, comment="定时时间(HH:mm)")
 
@@ -85,7 +90,9 @@ class ElectricityHistory(Base):
     room = Column(String(20), nullable=False, comment="房间号")
 
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./electricity.db"
+config = get_plugin_config(Config)
+database_path = config.csust_electricity.data_storage_path
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{database_path}/electricity.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
