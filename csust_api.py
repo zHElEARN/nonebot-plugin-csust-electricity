@@ -37,6 +37,11 @@ class ElectricityInfo:
     room: Room
     raw_message: str = ""
 
+proxies = {
+    "http": None,
+    "https": None,
+}
+
 
 class CSUSTElectricityAPI:
     QUERY_URL = "http://yktwd.csust.edu.cn:8988/web/Common/Tsm.html"
@@ -92,6 +97,7 @@ class CSUSTElectricityAPI:
                     "funname": data["funname"],
                     "json": data["json"],
                 },
+                proxies=proxies
             )
             response.raise_for_status()
             result = response.json()
@@ -184,7 +190,7 @@ class CSUSTElectricityAPI:
                 "json": query_params["json"],
             }
             response = requests.post(
-                self.QUERY_URL, headers=self.HEADERS, data=encoded_data
+                self.QUERY_URL, headers=self.HEADERS, data=encoded_data, proxies=proxies
             )
             response.raise_for_status()
 
