@@ -6,13 +6,13 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
-    Enum,
     Float,
+    ForeignKey,
     String,
     UniqueConstraint,
     create_engine,
 )
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 Base = declarative_base()
 
@@ -31,6 +31,8 @@ class Binding(Base):
     campus = Column(String(50), nullable=False, comment="校区名称")
     building = Column(String(50), nullable=False, comment="楼栋名称")
     room = Column(String(20), nullable=False, comment="房间号")
+
+    schedules = relationship("Schedule", back_populates="binding", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint(
@@ -56,11 +58,15 @@ class Schedule(Base):
         default=lambda: str(uuid.uuid4()),
         comment="主键UUID",
     )
-    contact: str = Column(String(20), nullable=False, index=True, comment="QQ号或群号")
-    contact_type: str = Column(
-        Enum("qq", "group", name="contact_type"), nullable=False, comment="联系类型"
+    binding_id = Column(
+        String(36), 
+        ForeignKey("bindings.id", ondelete="CASCADE"),
+        nullable=False,
+        comment="绑定ID"
     )
     schedule_time: str = Column(String(5), nullable=False, comment="定时时间(HH:mm)")
+
+    binding = relationship("Binding", back_populates="schedules")
 
 
 class ElectricityHistory(Base):
