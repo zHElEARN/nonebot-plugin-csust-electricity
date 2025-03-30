@@ -4,6 +4,7 @@ import nonebot
 from nonebot import get_plugin_config
 from nonebot.plugin import PluginMetadata
 
+from .commands.bind import *
 from .commands.query import *
 from .config import Config
 
