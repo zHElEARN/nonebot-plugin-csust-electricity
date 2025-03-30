@@ -10,7 +10,8 @@ from nonebot.params import CommandArg
 from nonebot.rule import to_me
 
 from ..csust_api import csust_api
-from ..db.electricity_db import Binding, SessionLocal
+from ..db.electricity_db import Binding, Schedule, SessionLocal
+from ..utils.scheduler import remove_schedule_job
 
 bind_command = on_command("绑定", rule=to_me())
 unbind_command = on_command("解绑", rule=to_me())
@@ -111,6 +112,16 @@ async def handle_unbind(event: Event, args: Message = CommandArg()):
                     f"{'群组' if sender_type == 'group' else '用户'}未绑定宿舍"
                 )
                 return
+
+            # 查询关联的定时任务并删除
+            schedule = (
+                session.query(Schedule)
+                .filter(Schedule.binding_id == existing_binding.id)
+                .first()
+            )
+            if schedule:
+                remove_schedule_job(existing_binding.id)
+
             session.delete(existing_binding)
             session.commit()
             await unbind_command.finish("解绑成功")
