@@ -9,7 +9,7 @@ require("nonebot_plugin_apscheduler")
 
 from nonebot_plugin_apscheduler import scheduler
 
-from ..commands.query import update_electricity_history
+from ..commands.query import predict_empty_time, update_electricity_history
 from ..csust_api import csust_api
 from ..db.electricity_db import Binding, Schedule, SessionLocal
 
@@ -33,6 +33,9 @@ async def query_and_send(binding_id: str):
             electricity_info, binding.campus, binding.building, binding.room
         )
 
+        # 预测电量耗尽时间
+        empty_time = predict_empty_time(binding.campus, binding.building, binding.room)
+
         # 构建消息
         message = (
             f"【定时查询】宿舍电量信息：\n"
@@ -41,6 +44,10 @@ async def query_and_send(binding_id: str):
             f"房间：{binding.room}\n"
             f"剩余电量：{electricity_info.value} 度\n"
         )
+
+        # 如果有预测结果，添加到消息中
+        if empty_time:
+            message += f"预计电量耗尽时间：{empty_time.strftime('%Y-%m-%d %H:%M')}\n"
 
         bot = get_bot()
         # 发送消息
