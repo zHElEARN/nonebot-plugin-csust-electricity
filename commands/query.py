@@ -88,7 +88,7 @@ async def handle_query(event: Event, args: Message = CommandArg()):
                     return
                 if building not in csust_api.get_buildings(campus):
                     await query_command.finish(
-                        "楼栋名称错误，请检查输入\nTips：发送「/电量 校区」可以查看校区宿舍楼"
+                        "楼栋名称错误，请检查输入\nTips：发送「电量 校区」可以查看校区宿舍楼"
                     )
                     return
                 electricity_info = csust_api.get_electricity(campus, building, room)
@@ -97,7 +97,7 @@ async def handle_query(event: Event, args: Message = CommandArg()):
                 await query_command.finish(message)
                 return
             else:
-                await query_command.finish("参数数量错误，请检查输入")
+                await query_command.finish("参数数量错误，正确格式：电量 [校区] [楼栋] [房间号] 或 电量 [校区]")
                 return
     except FinishedException as e:
         pass

@@ -31,7 +31,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
         args_text = args.extract_plain_text().strip()
         params = args_text.split()
         if len(params) != 3:
-            await bind_command.finish("绑定宿舍的格式为：绑定宿舍 校区 宿舍楼 宿舍号")
+            await bind_command.finish("绑定宿舍的格式为：绑定 [校区] [宿舍楼] [宿舍号]")
             return
         campus, building, room = params
         if campus not in csust_api.get_campus_names():
@@ -41,7 +41,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
             return
         if building not in csust_api.get_buildings(campus):
             await bind_command.finish(
-                "楼栋名称错误，请检查输入\nTips：发送「/电量 校区」可以查看校区宿舍楼"
+                "楼栋名称错误，请检查输入\nTips：发送「电量 校区」可以查看校区宿舍楼"
             )
             return
         with SessionLocal() as session:
@@ -74,7 +74,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
                 )
             session.commit()
             await bind_command.finish(
-                f"绑定成功：{campus} {building} {room}\nTips：发送「/电量」可以查询宿舍电量"
+                f"绑定成功：{campus} {building} {room}\nTips：发送「电量」可以查询宿舍电量"
             )
             return
     except FinishedException as e:
@@ -118,5 +118,5 @@ async def handle_unbind(event: Event, args: Message = CommandArg()):
     except FinishedException as e:
         pass
     except Exception as e:
-        await bind_command.finish(f"解绑出错: {str(e)}")
+        await unbind_command.finish(f"解绑出错: {str(e)}")
         return
