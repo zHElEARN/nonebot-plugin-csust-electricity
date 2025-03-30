@@ -6,6 +6,7 @@ from nonebot.plugin import PluginMetadata
 
 from .commands.bind import *
 from .commands.graph import *
+from .commands.help import *
 from .commands.query import *
 from .commands.schedule import *
 from .config import Config
