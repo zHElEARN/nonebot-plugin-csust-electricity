@@ -36,13 +36,13 @@ async def handle_query(event: Event, args: Message = CommandArg()):
                 f"校区：{binding.campus}\n"
                 f"楼栋：{binding.building}\n"
                 f"房间：{binding.room}\n"
-                f"剩余电量：{electricity_info.value} 度\n"
+                f"剩余电量：{electricity_info.value} 度"
             )
 
             # 如果有预测结果，添加到消息中
             if empty_time:
                 message += (
-                    f"预计电量耗尽时间：{empty_time.strftime('%Y-%m-%d %H:%M')}\n"
+                    f"\n预计电量耗尽时间：{empty_time.strftime('%Y-%m-%d %H:%M')}"
                 )
 
             await query_command.finish(message)
