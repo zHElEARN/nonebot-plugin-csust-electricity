@@ -9,6 +9,7 @@ from .commands.graph import *
 from .commands.help import *
 from .commands.query import *
 from .commands.schedule import *
+from .commands.clear import *
 from .config import Config
 
 __plugin_meta__ = PluginMetadata(
