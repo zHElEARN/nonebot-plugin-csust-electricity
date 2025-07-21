@@ -84,7 +84,7 @@ async def handle_query(event: Event, args: Message = CommandArg()):
                 await query_command.finish(message)
             else:
                 await query_command.finish(
-                    "参数数量错误，正确格式：电量 [校区] [楼栋] [房间号] 或 电量 [校区]"
+                    "参数数量错误，正确格式：/电量 [校区] [楼栋] [房间号] 或 /电量 [校区]"
                 )
     except FinishedException:
         pass

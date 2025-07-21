@@ -23,13 +23,13 @@ async def handle_schedule(event: Event, args: Message = CommandArg()):
         time_arg = args.extract_plain_text().strip()
         if not time_arg:
             await schedule_command.finish(
-                "请输入定时时间，格式：定时查询 HH:MM（例如：定时查询 08:00）"
+                "请输入定时时间，格式：/定时查询 HH:MM（例如：定时查询 08:00）"
             )
             return
 
         if not validate_time_format(time_arg):
             await schedule_command.finish(
-                "时间格式错误，请使用HH:MM格式（例如：08:00）"
+                "时间格式错误，请使用HH:MM格式（例如：08:00，要使用英文冒号）"
             )
             return
 
@@ -37,7 +37,7 @@ async def handle_schedule(event: Event, args: Message = CommandArg()):
         if not binding:
             await schedule_command.finish(
                 "您还没有绑定宿舍，请先使用命令绑定宿舍\n"
-                "格式：绑定 [校区] [楼栋] [房间号]"
+                "格式：/绑定 [校区] [楼栋] [房间号]"
             )
             return
 

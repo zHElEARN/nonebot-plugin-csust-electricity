@@ -20,7 +20,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
         args_text = args.extract_plain_text().strip()
         params = args_text.split()
         if len(params) != 3:
-            await bind_command.finish("绑定宿舍的格式为：绑定 [校区] [宿舍楼] [宿舍号]")
+            await bind_command.finish("绑定宿舍的格式为：/绑定 [校区] [宿舍楼] [宿舍号]")
             return
 
         campus, building, room = params
@@ -55,7 +55,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
 
             session.commit()
             await bind_command.finish(
-                f"绑定成功：{campus} {building} {room}\nTips：发送「电量」可以查询宿舍电量"
+                f"绑定成功：{campus} {building} {room}\nTips：发送「/电量」可以查询宿舍电量"
             )
     except FinishedException:
         pass
@@ -64,7 +64,7 @@ async def handle_bind(event: Event, args: Message = CommandArg()):
 
 
 @unbind_command.handle()
-async def handle_unbind(event: Event, args: Message = CommandArg()):
+async def handle_unbind(event: Event):
     try:
         sender_type, id = get_sender_info(event)
 

@@ -1,7 +1,6 @@
 from nonebot import on_command
 from nonebot.rule import to_me
-from nonebot.adapters.onebot.v11 import Event, Message
-from nonebot.params import CommandArg
+from nonebot.adapters.onebot.v11 import Event
 from nonebot.exception import FinishedException
 
 from ..db.electricity_db import ElectricityHistory, SessionLocal
@@ -20,7 +19,7 @@ async def handle_clear(event: Event):
         if not binding:
             await clear_command.finish(
                 "您还没有绑定宿舍，请先使用命令绑定宿舍\n"
-                "格式：绑定 [校区] [楼栋] [房间号]"
+                "格式：/绑定 [校区] [楼栋] [房间号]"
             )
             return
 
